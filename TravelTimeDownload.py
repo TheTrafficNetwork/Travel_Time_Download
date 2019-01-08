@@ -1,7 +1,18 @@
 #!/usr/bin/env python3
 """
-Program to utilize Acyclica's API key to download travel time data across a user defined time period. User will enter a start and end date. Those dates will be converted to Epoch time. The programming will open a csv containing RouteID and Route Name information for all main routes within the city for each direction. For each RouteID, a 24 hour period will be looped through from starting to ending date and download each 24 hour period. When all time periods for a route are downloaded, they will be pieced together into a single .csv file before moving onto the next Route. Once complete, the user will be notified with the number of Routes downloaded along with the total number of days.
-Sample URL = https://cr.acyclica.com/datastream/route/csv/time/APIKey/Route/Start/End/
+Program to utilize Acyclica's API key to download travel time data across a 
+user defined time period. User will enter a start and end date. Those dates 
+will be converted to Epoch time. The programming will open a csv containing 
+RouteID and Route Name information for all main routes within the city for 
+each direction. For each RouteID, a 24 hour period will be looped through from 
+starting to ending date and download each 24 hour period. When all time 
+periods for a route are downloaded, they will be pieced together into a single 
+.csv file before moving onto the next Route. Once complete, the user will be 
+notified with the number of Routes downloaded along with the total number of 
+days.
+
+Sample URL = 
+https://cr.acyclica.com/datastream/route/csv/time/APIKey/Route/Start/End/
 """
 
 import csv
@@ -21,11 +32,13 @@ from tqdm import tqdm
 
 def username_input(API_Key=None, User_Name=None):
     """
-    Requests username, looks in a csv file for the username, and returns the associated API key for the username.
+    Requests username, looks in a csv file for the username, and returns the 
+    associated API key for the username.
     """
     APIKeyHeaders = ["Username", "API_Key"]
     APIKey_df = pd.read_csv(
-        r"C:\Python Test Folder 2\API Key CSV.csv", skiprows=1, names=APIKeyHeaders)
+        r"C:\Python Test Folder 2\API Key CSV.csv", skiprows=1,
+        names=APIKeyHeaders)
     while not API_Key:
         try:
             User_Name = str.lower(input("Username: "))
@@ -91,7 +104,8 @@ def user_date_input():
 
 def start_end_times():
     """
-    Converts user inputed dates to epoch times for use in url download requests. 
+    Converts user inputed dates to epoch times for use in url download 
+    requests. 
     """
     StartDate, EndDate, StartDate_Str, EndDate_Str = user_date_input()
     Delta = EndDate - StartDate
@@ -113,7 +127,9 @@ def timedelta_h_m_s(delta):
 
 def route_dict():
     """
-    Trys to open a csv file containing Acyclica Route IDs,Route Names and places them in a dictionary to be used for download URLs as well as file and folder creation.
+    Trys to open a csv file containing Acyclica Route IDs,Route Names and 
+    places them in a dictionary to be used for download URLs as well as file 
+    and folder creation.
     """
     try:
         RouteCSV = open(r"C:\Python Test Folder 2\AcyclicaArterialRoutes.csv")
@@ -123,13 +139,14 @@ def route_dict():
             RouteID, RouteName = entry.split(',')
             RouteDict[RouteID] = RouteName
     except FileNotFoundError:
-        print('The .csv file containing routes cannot be found. Please check file location')
+        print("The .csv file containing routes cannot be found. Please check file location")
     return RouteDict
 
 
 def folder_creation(RouteName):
     """
-    Creates the folder structure for a route if there are no folders currently present.
+    Creates the folder structure for a route if there are no folders currently 
+    present.
     """
     FolderPath = f"C:\Python Test Folder 2\{RouteName}"
     SubFolder = f"{FolderPath}\Downloads"
@@ -144,7 +161,9 @@ def folder_creation(RouteName):
 
 def download_files(SubFolder, StartTime, URL_Base, Days, key, value):
     """
-    Downloads a day of data from Acyclica at a time by piecing together the url with start and end times each 24 hour period between the user request start and end dates.
+    Downloads a day of data from Acyclica at a time by piecing together the 
+    url with start and end times each 24 hour period between the user request 
+    start and end dates.
     """
     for i in range(Days):
         Start = str(StartTime + 86400 * i)
@@ -156,7 +175,8 @@ def download_files(SubFolder, StartTime, URL_Base, Days, key, value):
 
 def merge_downloaded_files(FolderPath, SubFolder, value, StartDateStr, EndDateStr):
     """
-    Takes the first 6 columes of every .csv in SubFolder and concatenates them into a single csv in the main folder.
+    Takes the first 6 columes of every .csv in SubFolder and concatenates them 
+    into a single csv in the main folder.
     """
     CSV_Files = glob.glob(SubFolder + '\*.csv')
     MergedFile = pd.concat(pd.read_csv(
