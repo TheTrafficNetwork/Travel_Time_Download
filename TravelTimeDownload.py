@@ -37,7 +37,7 @@ def username_input(API_Key=None, User_Name=None):
     """
     APIKeyHeaders = ["Username", "API_Key"]
     APIKey_df = pd.read_csv(
-        r"C:\Python Test Folder 2\API Key CSV.csv", skiprows=1,
+        r"C:/Python Test Folder 2/API Key CSV.csv", skiprows=1,
         names=APIKeyHeaders)
     while not API_Key:
         try:
@@ -132,7 +132,7 @@ def route_dict():
     and folder creation.
     """
     try:
-        RouteCSV = open(r"C:\Python Test Folder 2\AcyclicaArterialRoutes.csv")
+        RouteCSV = open(r"C:/Python Test Folder 2/AcyclicaArterialRoutes.csv")
         RouteDict = {}
         for line in RouteCSV:
             entry = line.strip()
@@ -148,8 +148,8 @@ def folder_creation(RouteName):
     Creates the folder structure for a route if there are no folders currently 
     present.
     """
-    FolderPath = f"C:\Python Test Folder 2\{RouteName}"
-    SubFolder = f"{FolderPath}\Downloads"
+    FolderPath = f"C:/Python Test Folder 2/{RouteName}"
+    SubFolder = f"{FolderPath}/Downloads"
     if not os.path.isdir(FolderPath):
         os.makedirs(FolderPath)
         print(f"New folder created at {FolderPath}")
@@ -169,7 +169,7 @@ def download_files(SubFolder, StartTime, URL_Base, Days, key, value):
         Start = str(StartTime + 86400 * i)
         End = str(StartTime + 86400 * (i + 1))
         Acyclica_URL = f"{URL_Base}/{key}/{Start}/{End}/"
-        FileName = f"{SubFolder}\{value} {Start}.csv"
+        FileName = f"{SubFolder}/{value} {Start}.csv"
         urllib.request.urlretrieve(Acyclica_URL, FileName)
 
 
@@ -178,10 +178,10 @@ def merge_downloaded_files(FolderPath, SubFolder, value, StartDateStr, EndDateSt
     Takes the first 6 columes of every .csv in SubFolder and concatenates them 
     into a single csv in the main folder.
     """
-    CSV_Files = glob.glob(SubFolder + '\*.csv')
+    CSV_Files = glob.glob(SubFolder + '/*.csv')
     MergedFile = pd.concat(pd.read_csv(
         f, index_col=[0, 1, 2, 3, 4, 5]) for f in CSV_Files)
-    CombinedFile = f"{FolderPath}\{value} from {StartDateStr} to {EndDateStr}.csv"
+    CombinedFile = f"{FolderPath}/{value} from {StartDateStr} to {EndDateStr}.csv"
     MergedFile.to_csv(CombinedFile)
     delete_downloaded_files(SubFolder)
     return CombinedFile
@@ -191,7 +191,7 @@ def delete_downloaded_files(SubFolder):
     """Cycles through all files in SubFolder and deletes every .csv file"""
     for filename in os.listdir(SubFolder):
         if filename.endswith('.csv'):
-            os.remove(f'{SubFolder}\{filename}')
+            os.remove(f'{SubFolder}/{filename}')
 
 
 def format_new_files(CombinedFileToBeFormatted):
