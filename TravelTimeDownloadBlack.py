@@ -168,7 +168,7 @@ def route_dict():
     """
     try:
         RouteCSV = open(
-            r"C:/Python Test Folder 2/AcyclicaArterialRoutes.csv"
+            r"C:/Python Test Folder/AcyclicaArterialRoutes.csv"
         )
         RouteDict = {}
         for line in RouteCSV:
@@ -187,7 +187,7 @@ def folder_creation(RouteName):
     Creates the folder structure for a route if there are no folders currently 
     present.
     """
-    FolderPath = f"C:/Python Test Folder 2/{RouteName}"
+    FolderPath = f"C:/Python Test Folder/{RouteName}"
     SubFolder = f"{FolderPath}/Downloads"
     if not os.path.isdir(FolderPath):
         os.makedirs(FolderPath)
