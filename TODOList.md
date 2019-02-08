@@ -20,7 +20,7 @@ TO DO LIST
  
 ### Files
 - [x] Create a To Do List
-- [ ] Create a ReadMe
+- [x] Create a ReadMe
 - [ ] Create a Setup
 - [ ] Create Requirements
 - [ ] Figure out proper structuring of project files/folder
