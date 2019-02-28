@@ -248,6 +248,7 @@ def format_new_files(mergedFile):
     del df['Timestamp']
     df = df[['DateTime', 'Month', 'Day', 'DoW', 'Date', 'Time',
              'Strengths', 'Firsts', 'Lasts', 'Minimums', 'Maximums']]
+    # TODO convert back to local time from UTC
     df.to_csv(mergedFile, index=False)
 
 
