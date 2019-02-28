@@ -111,16 +111,21 @@ for key, value in tqdm(AcyclicaRoutes.items()):
     # convert times to epoch
     fromDateEpoch, toDateEpoch = convert_to_epoch(fromDateUTC, toDateUTC)
     # delta epoch and remainder
-    wholeDays, partialDays = epoch_differences(fromDateEpoch, toDateEpoch)
+    wDays, extraSec = epoch_differences(fromDateEpoch, toDateEpoch)
     # TODO  finish  -  download_files(downloadFolder, StartTime, URL_Base, Days, key, value)
 
 def master_file_check(routeName, folderLocation):
+    """
+    Sets the location of the master file for each route.
+    TODO Need to add a check to see if file location exists. Create if otherwise.
+    """
     masterFile = f"{folderLocation}/{routeName} - Master.csv"
     return masterFile
 
 def get_last_date(masterFile):
     """
-    Reads the master .csv file for the route requested.
+    Reads the master .csv file for the route requested. 
+    TODO If not date exists, needs to create a date for 2 years and 15 min prior.
     """ 
     df = pd.read_csv(masterFile)
     lastDateString = max(df["DateTime"])
@@ -129,7 +134,7 @@ def get_last_date(masterFile):
 
 def download_from_date(lastDate):
     """
-    Adds 15 minuets to the lastDate from the master file to reference a starting point for the 
+    Adds 15 minuets to the lastDate from the master file to reference a starting point for the downloads.
     """
     fromDate = lastDate + timedelta(minutes = 15)
     fromDateString = fromDate.strftime('%Y-%m-%d %H:%M:%S')
@@ -156,36 +161,43 @@ def convert_to_epoch(fromDateUTC, toDateUTC):
     return fromDateEpoch, toDateEpoch
 
 def epoch_differences(fromDateEpoch, toDateEpoch):
+    """
+    Calculates total days between the fromDate and toDate along with remainder to give reference for the download loop. i.e. 1.5 days = 129600 seconds. WholeDays = 1 and partialDays = 43200. Loop would run for wholeDays + 1(if partial > 0). Request URL would go startEpoch to (startEpoch + 86400) for the first loop and (startEpoch + 86400) to (startEpoch + 86400 + 43200) for the second.
+    """
     deltaSeconds = toDateEpoch - fromDateEpoch
     wholeDaysRequested = deltaSeconds // 86400
-    partialDaysRequested = deltaSeconds % 86400
-    return wholeDaysRequested, partialDaysRequested
+    remainingSeconds = deltaSeconds % 86400
+    if remainingSeconds > 0:
+        wholeDaysRequested += 1
+    return wholeDaysRequested, remainingSeconds
 
-
-
-
-"""
-df = pd.read_csv(someFile)
-lastDateString = max(df["DateTime"]) # '2018-11-30 23:45:00'
-lastDate = datetime.strptime(lastDateString, "%Y-%m-%d %H:%M:%S") # datetime.datetime(2018, 11, 30, 23, 45)
-
-# Create a fromDate using the midnight after lastDate (i.e. '2018-12-01 00:00:00') and modify for timezone (America/Chicago)
-fromDate = lastDate + timedelta(minutes=15) # datetime.datetime(2018, 12, 1, 0, 0)
-fromDateString = fromDate.strftime('%Y-%m-%d %H:%M:%S') # '2018-12-01 00:00:00'
-fromDateUTC = fromDate.astimezone(tz.tzutc()) # datetime.datetime(2018, 12, 1, 6, 0)
-
-# Create a toDate using midnight of this morning (if datetime.now() = '2018-12-04 02:30:27' then toDate = '2018-12-04 00:00:00') and modify for timezone (America/Chicago)
-toDate = datetime.today().replace(hour=0,minute=0,second=0,microsecond=0) # datetime.datetime(2018, 12, 4, 0, 0)
-toDateString = toDate.strftime('%Y-%m-%d %H:%M:%S') # '2018-12-04 00:00:00'
-toDateUTC = toDate.astimezone(tz.tzutc()) # datetime.datetime(2018, 12, 4, 6, 0)
-
-# TODO Convert fromDate and toDate to epoch time for data request
-epochTime = datetime.utcfromtimestamp(0) # datetime.datetime(1970, 1, 1, 0, 0)
-epochTimeUTC = epochTime.replace(tzinfo=tz.tzutc())
-fromDateEpoch = int((fromDateUTC - epochTimeUTC).total_seconds())
-toDateEpoch = int((toDateUTC - epochTimeUTC).total_seconds())
-"""
 # Download data loop
+
+def download_files(downloadFolder, 
+                   fromDateEpoch, 
+                   acyclicaBaseURL, 
+                   wDays, 
+                   extraSec, 
+                   key, 
+                   value
+                   ):
+    """
+    Downloads a day of data from Acyclica at a time by piecing together the 
+    url with start and end times each time period between the user request 
+    start and end dates.
+    """
+    for day in range(wDays):
+        startTime = str(fromDateEpoch + (86400 * day))
+        if extraSec == 0:
+            endTime = str(fromDateEpoch + (86400 * (day + 1)))
+        else:
+            endTime = str(fromDateEpoch + (86400 * day) + extraSec)
+        acyclicaURL = f"{acyclicaBaseURL}/{key}/{startTime}/{endTime}/"
+        fileName = f"{downloadFolder}/{value} {startTime}.csv"
+        urllib.request.urlretrieve(acyclicaURL, fileName)
+
+
+
 
 
 """ 
@@ -198,8 +210,13 @@ Receive data in the following format:
 .
 1543881596472
 """
-
+# Format files
+# then
 # Combine Files
+# then
+# Append Files to the master file
+# then 
+# Delete rows over 2 yeras old
 
 """
 TODO
@@ -210,9 +227,6 @@ Convert to format of YYYY-MM-DD HH:DD:SS in 15 min bins and adjust for time diff
 2018-12-01 00:30:00
 .....
 """
-
-# TODO .append to end of file
-
 
 # Delete rows from 2 years before 
 
