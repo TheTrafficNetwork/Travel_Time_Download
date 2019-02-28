@@ -178,13 +178,13 @@ fromDateUTC = fromDate.astimezone(tz.tzutc()) # datetime.datetime(2018, 12, 1, 6
 toDate = datetime.today().replace(hour=0,minute=0,second=0,microsecond=0) # datetime.datetime(2018, 12, 4, 0, 0)
 toDateString = toDate.strftime('%Y-%m-%d %H:%M:%S') # '2018-12-04 00:00:00'
 toDateUTC = toDate.astimezone(tz.tzutc()) # datetime.datetime(2018, 12, 4, 6, 0)
-"""
+
 # TODO Convert fromDate and toDate to epoch time for data request
 epochTime = datetime.utcfromtimestamp(0) # datetime.datetime(1970, 1, 1, 0, 0)
 epochTimeUTC = epochTime.replace(tzinfo=tz.tzutc())
 fromDateEpoch = int((fromDateUTC - epochTimeUTC).total_seconds())
 toDateEpoch = int((toDateUTC - epochTimeUTC).total_seconds())
-
+"""
 # Download data loop
 
 
