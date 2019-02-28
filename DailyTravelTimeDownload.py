@@ -113,6 +113,9 @@ for key, value in tqdm(AcyclicaRoutes.items()):
     # delta epoch and remainder
     wDays, extraSec = epoch_differences(fromDateEpoch, toDateEpoch)
     # TODO  finish  -  download_files(downloadFolder, StartTime, URL_Base, Days, key, value)
+    download_files(downloadFolder, fromDateEpoch, acyclicaBaseURL, wDays, extraSec, key, value)
+    mergedFile = merge_downloaded_files(routeFolder, downloadFolder, value, StartDateStr, EndDateStr)
+    format_new_files(mergedFile)
 
 def master_file_check(routeName, folderLocation):
     """
@@ -160,44 +163,92 @@ def convert_to_epoch(fromDateUTC, toDateUTC):
     toDateEpoch = int((toDateUTC - epochTimeUTC).total_seconds())
     return fromDateEpoch, toDateEpoch
 
-def epoch_differences(fromDateEpoch, toDateEpoch):
+def epoch_differences(start, finish):
     """
     Calculates total days between the fromDate and toDate along with remainder to give reference for the download loop. i.e. 1.5 days = 129600 seconds. WholeDays = 1 and partialDays = 43200. Loop would run for wholeDays + 1(if partial > 0). Request URL would go startEpoch to (startEpoch + 86400) for the first loop and (startEpoch + 86400) to (startEpoch + 86400 + 43200) for the second.
     """
-    deltaSeconds = toDateEpoch - fromDateEpoch
+    deltaSeconds = finish - start
     wholeDaysRequested = deltaSeconds // 86400
     remainingSeconds = deltaSeconds % 86400
     if remainingSeconds > 0:
         wholeDaysRequested += 1
     return wholeDaysRequested, remainingSeconds
 
-# Download data loop
-
-def download_files(downloadFolder, 
-                   fromDateEpoch, 
-                   acyclicaBaseURL, 
-                   wDays, 
-                   extraSec, 
-                   key, 
-                   value
-                   ):
+def download_files(folder, start, url, days, seconds, routeID, route):
     """
     Downloads a day of data from Acyclica at a time by piecing together the 
     url with start and end times each time period between the user request 
     start and end dates.
     """
-    for day in range(wDays):
-        startTime = str(fromDateEpoch + (86400 * day))
-        if extraSec == 0:
-            endTime = str(fromDateEpoch + (86400 * (day + 1)))
+    for day in range(days):
+        startTime = str(start + (86400 * day))
+        if seconds == 0:
+            endTime = str(start + (86400 * (day + 1)))
         else:
-            endTime = str(fromDateEpoch + (86400 * day) + extraSec)
-        acyclicaURL = f"{acyclicaBaseURL}/{key}/{startTime}/{endTime}/"
-        fileName = f"{downloadFolder}/{value} {startTime}.csv"
+            endTime = str(start + (86400 * day) + seconds)
+        acyclicaURL = f"{url}/{routeID}/{startTime}/{endTime}/"
+        fileName = f"{folder}/{route} {startTime}.csv"
         urllib.request.urlretrieve(acyclicaURL, fileName)
 
+def merge_downloaded_files(routeFolder, downloadFolder, value, StartDateStr, EndDateStr):
+    """
+    Takes the first 6 columes of every .csv in SubFolder and concatenates them 
+    into a single csv in the main folder.
+    """
+    csvFiles = glob.glob(downloadFolder + '/*.csv')
+    MergedFile = pd.concat(pd.read_csv(
+        f, index_col=[0, 1, 2, 3, 4, 5]) for f in csvFiles)
+    combinedFile = f"{routeFolder}/{value} temp.csv"
+    MergedFile.to_csv(combinedFile)
+    delete_downloaded_files(downloadFolder)
+    return combinedFile
 
+def delete_downloaded_files(downloadFolder):
+    """
+    Cycles through all files in downloadFolder and deletes every .csv file
+    """
+    for fileName in os.listdir(downloadFolder):
+        if fileName.endswith('.csv'):
+            os.remove(f'{downloadFolder}/{fileName}')
 
+def format_new_files(mergedFile):
+    """
+    Formats the combined file for use in Excel
+    -Removes lines containing 0s (missing data) as to not influence averages
+    -Averages based on 15min time periods
+    -Converts ms into h:mm:ss formatting
+    -Splits datatime into multiple columns for different Excel formulas
+    """
+    df = pd.read_csv(mergedFile)
+    df["Timestamp"] = pd.to_datetime(df["Timestamp"], unit='ms')
+    df = df[(df != 0).all(1)]
+    df = df.resample('15min', base=0, on="Timestamp").mean()
+    df = df.reset_index()
+    df['Timestamp'] = pd.to_datetime(df['Timestamp'], unit='ms').apply(
+        '{:%B %A %w %Y-%m-%d %H:%M:%S}'.format)
+    df.Strengths = pd.to_timedelta(
+        df.Strengths, unit='ms').apply(timedelta_h_m_s)
+    df.Firsts = pd.to_timedelta(df.Firsts, unit='ms').apply(timedelta_h_m_s)
+    df.Lasts = pd.to_timedelta(df.Lasts, unit='ms').apply(timedelta_h_m_s)
+    df.Minimums = pd.to_timedelta(
+        df.Minimums, unit='ms').apply(timedelta_h_m_s)
+    df.Maximums = pd.to_timedelta(
+        df.Maximums, unit='ms').apply(timedelta_h_m_s)
+    df['Month'] = df.Timestamp.str.split(' ').str.get(0)
+    df['Day'] = df.Timestamp.str.split(' ').str.get(1)
+    df['DoW'] = df.Timestamp.str.split(' ').str.get(2)
+    df['Date'] = df.Timestamp.str.split(' ').str.get(3)
+    df['Time'] = df.Timestamp.str.split(' ').str.get(4)
+    df['DoW'] = df['DoW'].astype(int)
+    df.DoW = df.DoW + 1
+    df['DateTime'] = df.Date + " " + df.Time
+    df['Date'] = pd.to_datetime(df['Date']).apply('{:%Y-%m-%d}'.format)
+    df['DateTime'] = pd.to_datetime(df['DateTime']).apply(
+        '{:%Y-%m-%d %H:%M:%S}'.format)
+    del df['Timestamp']
+    df = df[['DateTime', 'Month', 'Day', 'DoW', 'Date', 'Time',
+             'Strengths', 'Firsts', 'Lasts', 'Minimums', 'Maximums']]
+    df.to_csv(mergedFile, index=False)
 
 
 """ 
