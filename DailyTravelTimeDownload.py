@@ -49,6 +49,8 @@ for key, value in tqdm(acyclicaRoutes.items()):
         revert to local time
     append merged to master
     delete older than 2 years
+output each step to log for each route
+output each route being done in log
 """
 
 # create a route dictionary of routeID and routeNames
@@ -70,6 +72,13 @@ def route_dict():
               + "Please check file location")
     return routeDict
 
+def base_url_creation():
+    """Creates the base of the url download request with the API"""
+    Base_URL = f"https://cr.acyclica.com/datastream/route/csv/time"
+    APIKey = "qAgh5gIDungtzIuC1dyRBMfimhwKQlWm2hhdROA4"
+    apiURL = f"{Base_URL}/{APIKey}"
+    return apiURL
+
 #Folder check
 def folder_creation(routeName):
     """
@@ -86,19 +95,21 @@ def folder_creation(routeName):
         print(f"New Download folder created at {downloadFolder}")
     return routeFolder, downloadFolder
 
-def base_url_creation():
-    """Creates the base of the url download request with the API"""
-    Base_URL = f"https://cr.acyclica.com/datastream/route/csv/time"
-    APIKey = "qAgh5gIDungtzIuC1dyRBMfimhwKQlWm2hhdROA4"
-    apiURL = f"{Base_URL}/{APIKey}"
-    return apiURL
-
-# TODO if master file is not present, create it 
+def master_file_check(routeName, folderLocation):
+    """
+    Sets the location of the master file for each route.
+    TODO Need to add a check to see if file location exists. Create if otherwise.
+    """
+    masterFile = f"{folderLocation}/{routeName} - Master.csv"
+    if not os.path.isfile(masterFile):
+        with open(masterFile, 'w') as newFile:
+            newFile.write("DateTime,Month,Day,DoW,Date,Time,Strengths,Firsts,Lasts,Minimums,Maximums")
+    return masterFile
 
 # TODO for key, value in tqdm(acyclicaRoutes.items()):
-AcyclicaRoutes = route_dict()
+acyclicaRoutes = route_dict()
 acyclicaBaseURL = base_url_creation()
-for key, value in tqdm(AcyclicaRoutes.items()):
+for key, value in tqdm(acyclicaRoutes.items()):
     # make sure folders are created and in place
     routeFolder, downloadFolder = folder_creation(value)
     # read csv of master file
@@ -118,13 +129,6 @@ for key, value in tqdm(AcyclicaRoutes.items()):
     mergedFile = merge_downloaded_files(routeFolder, downloadFolder, value, StartDateStr, EndDateStr)
     format_new_files(mergedFile)
 
-def master_file_check(routeName, folderLocation):
-    """
-    Sets the location of the master file for each route.
-    TODO Need to add a check to see if file location exists. Create if otherwise.
-    """
-    masterFile = f"{folderLocation}/{routeName} - Master.csv"
-    return masterFile
 
 def get_last_date(masterFile):
     """
