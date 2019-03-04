@@ -211,6 +211,13 @@ def delete_downloaded_files(downloadFolder):
         if fileName.endswith('.csv'):
             os.remove(f'{downloadFolder}/{fileName}')
 
+def timedelta_h_m_s(delta):
+    """Formatting conversion of ms to hh:mm:ss for travel times."""
+    h = delta.seconds // 60 // 60
+    m = delta.seconds // 60
+    s = delta.seconds % 60
+    return'{:0>2}:{:0>2}:{:0>2}'.format(h, m, s)
+
 def format_new_files(mergedFile):
     """
     Formats the combined file for use in Excel
