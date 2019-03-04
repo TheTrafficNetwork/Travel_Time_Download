@@ -44,10 +44,11 @@ for key, value in tqdm(acyclicaRoutes.items()):
     get delta of lastDateTime to nowDateTime
     for day in delta:
         download csv files
-    combine files
-    revert to local time
-    append to master
-    delete 2 years prior
+        combine files
+        format merged file
+        revert to local time
+    append merged to master
+    delete older than 2 years
 """
 
 # create a route dictionary of routeID and routeNames
