@@ -27,6 +27,7 @@ from datetime import datetime
 from urllib import request
 from urllib.request import urlretrieve
 import pandas as pd
+import numpy as np
 from tqdm import tqdm
 
 
