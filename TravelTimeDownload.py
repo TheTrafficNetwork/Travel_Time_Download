@@ -204,7 +204,7 @@ def format_new_files(CombinedFileToBeFormatted):
     """
     df = pd.read_csv(CombinedFileToBeFormatted)
     df["Timestamp"] = pd.to_datetime(df["Timestamp"], unit='ms')
-    df = df[(df != 0).all(1)]
+    df = df.replace(0, np.nan)
     df = df.resample('15min', base=0, on="Timestamp").mean()
     df = df.reset_index()
     df['Timestamp'] = pd.to_datetime(df['Timestamp'], unit='ms').apply(
