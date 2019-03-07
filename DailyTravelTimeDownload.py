@@ -69,6 +69,7 @@ def route_dict():
             routeID, routeName = entry.split(',')
             routeDict[routeID] = routeName
     except FileNotFoundError:
+        # TODO add the printout to a log file
         print("The .csv file containing routes cannot be found. "
               + "Please check file location")
     return routeDict
@@ -113,6 +114,7 @@ def get_last_date(masterFile):
     """ 
     df = pd.read_csv(masterFile)
     lastDateString = max(df["DateTime"])
+# TODO - add try with except ValueError: max() arg is an empy sequence
     lastDate = datetime.strptime(lastDateString, '%Y-%m-%d %H:%M:%S')
     return lastDate
 
@@ -140,7 +142,7 @@ def convert_to_epoch(fromDateUTC, toDateUTC):
     """
     epochTime = datetime.utcfromtimestamp(0)
     epochTimeUTC = epochTime.replace(tzinfo=tz.tzutc())
-    #TODO check to see if the epcoh in UTC is needed or breaking the time system
+#TODO check to see if the epcoh in UTC is needed or breaking the time system
     fromDateEpoch = int((fromDateUTC - epochTimeUTC).total_seconds())
     toDateEpoch = int((toDateUTC - epochTimeUTC).total_seconds())
     return fromDateEpoch, toDateEpoch
@@ -180,21 +182,7 @@ def download_file(url, routeID, startTime, endTime, folder, routeName):
     fileName = f"{folder}/{routeName} {startTime}.csv"
     urllib.request.urlretrieve(acyclicaURL, fileName)
 
-acyclicaRoutes = route_dict()
-acyclicaBaseURL = base_url_creation()
-for key, value in tqdm(acyclicaRoutes.items()):
-    routeFolder, downloadFolder = folder_creation(value)
-    masterFile = master_file_check(value, routeFolder)
-    lastDate = get_last_date(masterFile)
-    fromDate, fromDateString, fromDateUTC = download_from_date(lastDate)
-    toDate, toDateString, toDateUTC = midnight_today()
-    fromDateEpoch, toDateEpoch = convert_to_epoch(fromDateUTC, toDateUTC)
-    wDays, extraSec = epoch_differences(fromDateEpoch, toDateEpoch)
-    loop_download(downloadFolder, fromDateEpoch, acyclicaBaseURL, wDays, extraSec, key, value)
-    mergedFile = merge_downloaded_files(routeFolder, downloadFolder, value, StartDateStr, EndDateStr)
-    format_new_files(mergedFile)
-
-def merge_downloaded_files(routeFolder, downloadFolder, value, StartDateStr, EndDateStr):
+def merge_downloaded_files(routeFolder, downloadFolder, value):
     """
     Takes the first 6 columes of every .csv in SubFolder and concatenates them 
     into a single csv in the main folder.
@@ -234,6 +222,8 @@ def format_new_files(mergedFile):
     df["Timestamp"] = pd.to_datetime(df["Timestamp"], unit='ms')
     df = df.replace(0, np.nan)
     df = df.resample('15min', base=0, on="Timestamp").mean()
+# TODO possible interpolate over x amount of Nan rows? Max of 1-3?
+# TODO convert back to local time from UTC
     df = df.reset_index()
     df['Timestamp'] = pd.to_datetime(df['Timestamp'], unit='ms').apply(
         '{:%B %A %w %Y-%m-%d %H:%M:%S}'.format)
@@ -259,27 +249,53 @@ def format_new_files(mergedFile):
     del df['Timestamp']
     df = df[['DateTime', 'Month', 'Day', 'DoW', 'Date', 'Time',
              'Strengths', 'Firsts', 'Lasts', 'Minimums', 'Maximums']]
-    # TODO convert back to local time from UTC
     df.to_csv(mergedFile, index=False)
 
+def append_new_timeframes(mergedFile, masterFile):
+    """
+    Appends the new temp file to the master file.
+    """
+    with open(mergedFile, 'r') as f1:
+        merged = f1.read()
 
-""" 
-Receive data in the following format:
+    with open(masterFile, 'a') as f2:
+        f2.write('\n')
+        f2.write(merged)
 
-1543622418970
-.
-.
-.
-.
-1543881596472
-"""
-# Format files
-# then
-# Combine Files
-# then
-# Append Files to the master file
-# then 
-# Delete rows over 2 yeras old
+
+def delete_old_timeframes(toDate, masterFile):
+    """
+    Reads the master file for the Route and deletes entries older than 2 years.
+    """
+    deleteYear = toDate.strftime('%Y')
+    deleteToYear = int(deleteYear) - 2
+    deleteToDate = toDate.replace(year = deleteToYear)
+    deleteToDateString = datetime.strptime(deleteToDate, '%Y-%m-%d %H:%M:%S')
+    df = pd.read_csv(masterFile)
+    df.drop(df[df["DateTime"] < deleteToDateString ].index, inplace = True)
+    df.to_csv(masterFile, index=False)
+
+def main():
+    acyclicaRoutes = route_dict()
+    acyclicaBaseURL = base_url_creation()
+    for key, value in tqdm(acyclicaRoutes.items()):
+        routeFolder, downloadFolder = folder_creation(value)
+        masterFile = master_file_check(value, routeFolder)
+        lastDate = get_last_date(masterFile)
+        fromDate, fromDateString, fromDateUTC = download_from_date(lastDate)
+        toDate, toDateString, toDateUTC = midnight_today()
+        fromDateEpoch, toDateEpoch = convert_to_epoch(fromDateUTC, toDateUTC)
+        wDays, extraSec = epoch_differences(fromDateEpoch, toDateEpoch)
+        loop_download(downloadFolder, fromDateEpoch, acyclicaBaseURL, wDays, extraSec, key, value)
+        mergedFile = merge_downloaded_files(routeFolder, downloadFolder, value)
+        format_new_files(mergedFile)
+        append_new_timeframes(TODO)
+        delete_old_timeframes(toDate, masterFile)
+
+
+
+
+
 
 """
 TODO
@@ -291,13 +307,4 @@ Convert to format of YYYY-MM-DD HH:DD:SS in 15 min bins and adjust for time diff
 .....
 """
 
-# Delete rows from 2 years before 
 
-#deleteFromDateString = min(df["DateTime"])
-#deleteFromDate = datetime.strptime(deleteFromDateString, "%Y-%m-%d %H:%M:%S")
-# TODO Read the master file into a datafram
-deleteYear = toDate.strftime('%Y')
-deleteToYear = int(deleteYear) - 2
-deleteToDate = toDate.replace(year=deleteToYear)
-df.drop(df[df["DateTime"] < deleteToDateString ].index, inplace = True)
-# TODO Replace the master file with the new dataframe
