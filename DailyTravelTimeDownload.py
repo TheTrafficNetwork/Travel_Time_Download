@@ -154,6 +154,32 @@ def epoch_differences(start, finish):
     remainingSeconds = deltaSeconds % 86400
     return daysRequested, remainingSeconds
 
+def loop_download(folder, start, url, days, seconds, routeID, routeName):
+    """
+    Creates the start and end times for each period in the total requested set of data. Forwards each time period to the download module.
+    """
+    if seconds == 0:
+        for day in range(days):
+            startTime = str(start + (86400 * day))
+            endTime = str(start + (86400 * (day + 1)))
+            download_file(url, routeID, startTime, endTime, folder, routeName)
+    else:
+        for day in range(days):
+            startTime = str(start + (86400 * day))
+            if day < (days - 1):
+                endTime = str(start + (86400 * (day + 1)))
+            else:
+                endTime = str(start + (86400 * day) + secondsRemaining)
+            download_file(url, routeID, startTime, endTime, folder, routeName)
+
+def download_file(url, routeID, startTime, endTime, folder, routeName):
+    """
+    Downloads up to a 24 hour period of data from Acyclica's site using thier API url and specifying a new file name for each download. 
+    """
+    acyclicaURL = f"{url}/{routeID}/{startTime}/{endTime}/"
+    fileName = f"{folder}/{routeName} {startTime}.csv"
+    urllib.request.urlretrieve(acyclicaURL, fileName)
+
 acyclicaRoutes = route_dict()
 acyclicaBaseURL = base_url_creation()
 for key, value in tqdm(acyclicaRoutes.items()):
@@ -172,32 +198,9 @@ for key, value in tqdm(acyclicaRoutes.items()):
     # delta epoch and remainder
     wDays, extraSec = epoch_differences(fromDateEpoch, toDateEpoch)
     # TODO  finish  -  download_files(downloadFolder, StartTime, URL_Base, Days, key, value)
-    download_files(downloadFolder, fromDateEpoch, acyclicaBaseURL, wDays, extraSec, key, value)
+    loop_download(downloadFolder, fromDateEpoch, acyclicaBaseURL, wDays, extraSec, key, value)
     mergedFile = merge_downloaded_files(routeFolder, downloadFolder, value, StartDateStr, EndDateStr)
     format_new_files(mergedFile)
-
-
-
-
-
-
-
-def download_files(folder, start, url, days, seconds, routeID, route):
-    """
-    Downloads a day of data from Acyclica at a time by piecing together the 
-    url with start and end times each time period between the user request 
-    start and end dates.
-    """
-    for day in range(days):
-        #TODO create while loop for range being less than the last day
-        startTime = str(start + (86400 * day))
-        if seconds == 0:
-            endTime = str(start + (86400 * (day + 1)))
-        else:
-            endTime = str(start + (86400 * day) + seconds)
-        acyclicaURL = f"{url}/{routeID}/{startTime}/{endTime}/"
-        fileName = f"{folder}/{route} {startTime}.csv"
-        urllib.request.urlretrieve(acyclicaURL, fileName)
 
 def merge_downloaded_files(routeFolder, downloadFolder, value, StartDateStr, EndDateStr):
     """
