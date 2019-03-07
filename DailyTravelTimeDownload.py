@@ -254,6 +254,11 @@ def format_new_files(mergedFile):
 def append_new_timeframes(mergedFile, masterFile):
     """
     Appends the new temp file to the master file.
+    """    
+    with open(masterFile,"wb") as fout:
+        with open(mergedFile, "rb") as f:
+            next(f)
+            fout.write(f.read())
     """
     with open(mergedFile, 'r') as f1:
         merged = f1.read()
@@ -261,6 +266,10 @@ def append_new_timeframes(mergedFile, masterFile):
     with open(masterFile, 'a') as f2:
         f2.write('\n')
         f2.write(merged)
+    """
+
+
+
 
 
 def delete_old_timeframes(toDate, masterFile):
@@ -291,20 +300,4 @@ def main():
         format_new_files(mergedFile)
         append_new_timeframes(TODO)
         delete_old_timeframes(toDate, masterFile)
-
-
-
-
-
-
-"""
-TODO
-Convert to format of YYYY-MM-DD HH:DD:SS in 15 min bins and adjust for time difference of UTC to America/Chicago accounting for daylight savings time differences:
-
-2018-12-01 00:00:00
-2018-12-01 00:15:00
-2018-12-01 00:30:00
-.....
-"""
-
 
