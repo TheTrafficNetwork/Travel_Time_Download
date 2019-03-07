@@ -183,21 +183,13 @@ def download_file(url, routeID, startTime, endTime, folder, routeName):
 acyclicaRoutes = route_dict()
 acyclicaBaseURL = base_url_creation()
 for key, value in tqdm(acyclicaRoutes.items()):
-    # make sure folders are created and in place
     routeFolder, downloadFolder = folder_creation(value)
-    # read csv of master file
     masterFile = master_file_check(value, routeFolder)
-    # get last DateTime
     lastDate = get_last_date(masterFile)
-    # modify last date for the next time frame and convert to UTC
     fromDate, fromDateString, fromDateUTC = download_from_date(lastDate)
-    # get now time and convert to UTC
     toDate, toDateString, toDateUTC = midnight_today()
-    # convert times to epoch
     fromDateEpoch, toDateEpoch = convert_to_epoch(fromDateUTC, toDateUTC)
-    # delta epoch and remainder
     wDays, extraSec = epoch_differences(fromDateEpoch, toDateEpoch)
-    # TODO  finish  -  download_files(downloadFolder, StartTime, URL_Base, Days, key, value)
     loop_download(downloadFolder, fromDateEpoch, acyclicaBaseURL, wDays, extraSec, key, value)
     mergedFile = merge_downloaded_files(routeFolder, downloadFolder, value, StartDateStr, EndDateStr)
     format_new_files(mergedFile)
