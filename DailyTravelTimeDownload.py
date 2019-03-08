@@ -222,7 +222,7 @@ def format_new_files(mergedFile):
     df = df.replace(0, np.nan)
     df = df.resample('15min', base=0, on="Timestamp").mean()
 # TODO possible interpolate over x amount of Nan rows? Max of 1-3?
-# TODO convert back to local time from UTC
+    df["Timestamp"] = df["Timestamp"].dt.tz_localize('utc').dt.tz_convert('US/Central')
     df = df.reset_index()
     df['Timestamp'] = pd.to_datetime(df['Timestamp'], unit='ms').apply(
         '{:%B %A %w %Y-%m-%d %H:%M:%S}'.format)
@@ -258,6 +258,8 @@ def append_new_timeframes(mergedFile, masterFile):
         with open(mergedFile, "rb") as f:
             next(f)
             fout.write(f.read())
+# TODO put a check in to make sure the files were appended before deleting
+    delete_temp_file(mergedfile)
 
 def delete_temp_file(mergedFile):
     """ Deletes the merged file. """
@@ -292,6 +294,6 @@ def main():
         loop_download(downloadFolder, fromDateEpoch, acyclicaBaseURL, wDays, extraSec, key, value)
         mergedFile = merge_downloaded_files(routeFolder, downloadFolder, value)
         format_new_files(mergedFile)
-        append_new_timeframes(TODO)
+        append_new_timeframes(mergedFile, masterFile)
         delete_old_timeframes(toDate, masterFile)
 
