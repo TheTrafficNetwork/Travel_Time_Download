@@ -32,29 +32,8 @@ import pandas as pd
 import numpy as np
 from tqdm import tqdm
 
-"""
-# Work Flow intended:
 
-create a route dictionary of routeID and routeNames
-for key, value in tqdm(acyclicaRoutes.items()):
-    read csv of master file to a dataframe
-    get last DateTime
-    get now time
-    convert times to UTC time zone
-    convert times to epoch
-    get delta of lastDateTime to nowDateTime
-    for day in delta:
-        download csv files
-        combine files
-        format merged file
-        revert to local time
-    append merged to master
-    delete older than 2 years
-output each step to log for each route
-output each route being done in log
-"""
 
-# create a route dictionary of routeID and routeNames
 def route_dict():
     """
     Trys to open a csv file containing Acyclica Route IDs,Route Names and 
@@ -81,7 +60,6 @@ def base_url_creation():
     apiURL = f"{Base_URL}/{APIKey}"
     return apiURL
 
-#Folder check
 def folder_creation(routeName):
     """
     Creates the folder structure for a route if there are no folders currently 
@@ -142,7 +120,7 @@ def convert_to_epoch(fromDateUTC, toDateUTC):
     """
     epochTime = datetime.utcfromtimestamp(0)
 #   epochTimeUTC = epochTime.replace(tzinfo=tz.tzutc())
-#TODO check to see if the epcoh in UTC is needed or breaking the time system
+# TODO check to see if the epcoh in UTC is needed or breaking the time system
     fromDateEpoch = int((fromDateUTC - epochTimeUTC).total_seconds())
     toDateEpoch = int((toDateUTC - epochTimeUTC).total_seconds())
     return fromDateEpoch, toDateEpoch
@@ -297,3 +275,5 @@ def main():
         append_new_timeframes(mergedFile, masterFile)
         delete_old_timeframes(toDate, masterFile)
 
+if __name__ == "__main__":
+    main()
