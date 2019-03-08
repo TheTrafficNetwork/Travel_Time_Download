@@ -107,7 +107,7 @@ def download_from_date(lastDate):
     """
     fromDate = lastDate + timedelta(minutes = 15)
     fromDateString = fromDate.strftime('%Y-%m-%d %H:%M:%S')
-    fromDateUTC = fromDate.astimezone(tz.tzutc())
+    fromDateUTC = fromDate.astimezone(tz.tzutc()).replace(tzinfo = None)
     return fromDate, fromDateString, fromDateUTC
 
 
@@ -117,7 +117,7 @@ def midnight_today():
     """
     toDate = datetime.today().replace(hour=0,minute=0,second=0,microsecond=0)
     toDateString = toDate.strftime('%Y-%m-%d %H:%M:%S')
-    toDateUTC = toDate.astimezone(tz.tzutc())
+    toDateUTC = toDate.astimezone(tz.tzutc()).replace(tzinfo = None)
     return toDate, toDateString, toDateUTC
 
 
@@ -214,8 +214,8 @@ def format_new_files(mergedFile):
     df = df.replace(0, np.nan)
     df = df.resample('15min', base=0, on="Timestamp").mean()
 # TODO possible interpolate over x amount of Nan rows? Max of 1-3?
-    df["Timestamp"] = df["Timestamp"].dt.tz_localize('utc').dt.tz_convert('US/Central')
     df = df.reset_index()
+    df["Timestamp"] = df["Timestamp"].dt.tz_localize('utc').dt.tz_convert('US/Central')
     df['Timestamp'] = pd.to_datetime(df['Timestamp'], unit='ms').apply(
         '{:%B %A %w %Y-%m-%d %H:%M:%S}'.format)
     df.Strengths = pd.to_timedelta(
