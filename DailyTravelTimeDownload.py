@@ -53,12 +53,14 @@ def route_dict():
               + "Please check file location")
     return routeDict
 
+
 def base_url_creation():
     """Creates the base of the url download request with the API"""
     Base_URL = f"https://cr.acyclica.com/datastream/route/csv/time"
     APIKey = "qAgh5gIDungtzIuC1dyRBMfimhwKQlWm2hhdROA4"
     apiURL = f"{Base_URL}/{APIKey}"
     return apiURL
+
 
 def folder_creation(routeName):
     """
@@ -75,6 +77,7 @@ def folder_creation(routeName):
         print(f"New Download folder created at {downloadFolder}")
     return routeFolder, downloadFolder
 
+
 def master_file_check(routeName, folderLocation):
     """
     Sets the location of the master file for each route. Checks to see if file exists. If it does not, then it creates it with applicable headers.
@@ -84,6 +87,7 @@ def master_file_check(routeName, folderLocation):
         with open(masterFile, 'w') as newFile:
             newFile.write("DateTime,Month,Day,DoW,Date,Time,Strengths,Firsts,Lasts,Minimums,Maximums")
     return masterFile
+
 
 def get_last_date(masterFile):
     """
@@ -96,6 +100,7 @@ def get_last_date(masterFile):
     lastDate = datetime.strptime(lastDateString, '%Y-%m-%d %H:%M:%S')
     return lastDate
 
+
 def download_from_date(lastDate):
     """
     Adds 15 minuets to the lastDate from the master file to reference a starting point for the downloads.
@@ -105,6 +110,7 @@ def download_from_date(lastDate):
     fromDateUTC = fromDate.astimezone(tz.tzutc())
     return fromDate, fromDateString, fromDateUTC
 
+
 def midnight_today():
     """
     Calculates the date and time of the midnight just recently passed to be used as an end time.
@@ -113,6 +119,7 @@ def midnight_today():
     toDateString = toDate.strftime('%Y-%m-%d %H:%M:%S')
     toDateUTC = toDate.astimezone(tz.tzutc())
     return toDate, toDateString, toDateUTC
+
 
 def convert_to_epoch(fromDateUTC, toDateUTC):
     """
@@ -125,6 +132,7 @@ def convert_to_epoch(fromDateUTC, toDateUTC):
     toDateEpoch = int((toDateUTC - epochTimeUTC).total_seconds())
     return fromDateEpoch, toDateEpoch
 
+
 def epoch_differences(start, finish):
     """
     Calculates total days between the fromDate and toDate along with remainder to give reference for the download loop. i.e. 1.5 days = 129600 seconds. days = 1 with partialDays = 43200 as remainder. Loop would run for daysRequested. Request URL would go startEpoch to (startEpoch + 86400) for the first loop and (startEpoch + 86400) to (startEpoch + 86400 + 43200) for the second.
@@ -133,6 +141,7 @@ def epoch_differences(start, finish):
     daysRequested = ( - ( - deltaSeconds // 86400 ))
     remainingSeconds = deltaSeconds % 86400
     return daysRequested, remainingSeconds
+
 
 def loop_download(folder, start, url, days, seconds, routeID, routeName):
     """
@@ -152,6 +161,7 @@ def loop_download(folder, start, url, days, seconds, routeID, routeName):
                 endTime = str(start + (86400 * day) + secondsRemaining)
             download_file(url, routeID, startTime, endTime, folder, routeName)
 
+
 def download_file(url, routeID, startTime, endTime, folder, routeName):
     """
     Downloads up to a 24 hour period of data from Acyclica's site using thier API url and specifying a new file name for each download. 
@@ -159,6 +169,7 @@ def download_file(url, routeID, startTime, endTime, folder, routeName):
     acyclicaURL = f"{url}/{routeID}/{startTime}/{endTime}/"
     fileName = f"{folder}/{routeName} {startTime}.csv"
     urllib.request.urlretrieve(acyclicaURL, fileName)
+
 
 def merge_downloaded_files(routeFolder, downloadFolder, value):
     """
@@ -172,6 +183,7 @@ def merge_downloaded_files(routeFolder, downloadFolder, value):
     delete_downloaded_files(downloadFolder)
     return combinedFile
 
+
 def delete_downloaded_files(downloadFolder):
     """
     Cycles through all files in downloadFolder and deletes every .csv file
@@ -180,12 +192,14 @@ def delete_downloaded_files(downloadFolder):
         if fileName.endswith('.csv'):
             os.remove(f'{downloadFolder}/{fileName}')
 
+
 def timedelta_h_m_s(delta):
     """Formatting conversion of ms to hh:mm:ss for travel times."""
     h = delta.seconds // 60 // 60
     m = delta.seconds // 60
     s = delta.seconds % 60
     return'{:0>2}:{:0>2}:{:0>2}'.format(h, m, s)
+
 
 def format_new_files(mergedFile):
     """
@@ -228,6 +242,7 @@ def format_new_files(mergedFile):
              'Strengths', 'Firsts', 'Lasts', 'Minimums', 'Maximums']]
     df.to_csv(mergedFile, index=False)
 
+
 def append_new_timeframes(mergedFile, masterFile):
     """
     Appends the new temp file to the master file.
@@ -239,9 +254,11 @@ def append_new_timeframes(mergedFile, masterFile):
 # TODO put a check in to make sure the files were appended before deleting
     delete_temp_file(mergedfile)
 
+
 def delete_temp_file(mergedFile):
     """ Deletes the merged file. """
     os.remove(mergedFile)
+
 
 def delete_old_timeframes(toDate, masterFile):
     """
@@ -255,10 +272,9 @@ def delete_old_timeframes(toDate, masterFile):
     df.drop(df[df["DateTime"] < deleteToDateString ].index, inplace = True)
     df.to_csv(masterFile, index=False)
 
+
 def main():
-    """
-    Main function that runs through the process of the program. 
-    """
+    """ Main function that runs through the process of the program. """
     acyclicaRoutes = route_dict()
     acyclicaBaseURL = base_url_creation()
     for key, value in tqdm(acyclicaRoutes.items()):
@@ -275,5 +291,5 @@ def main():
         append_new_timeframes(mergedFile, masterFile)
         delete_old_timeframes(toDate, masterFile)
 
-if __name__ == "__main__":
-    main()
+#if __name__ == "__main__":
+#    main()
