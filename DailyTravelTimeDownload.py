@@ -184,8 +184,7 @@ def download_file(url, routeID, startTime, endTime, folder, routeName):
 
 def merge_downloaded_files(routeFolder, downloadFolder, value):
     """
-    Takes the first 6 columes of every .csv in SubFolder and concatenates them 
-    into a single csv in the main folder.
+    Takes the first 6 columes of every .csv in SubFolder and concatenates them into a single csv in the main folder.
     """
     csvFiles = glob.glob(downloadFolder + '/*.csv')
     MergedFile = pd.concat(pd.read_csv(
@@ -261,9 +260,7 @@ def append_new_timeframes(mergedFile, masterFile):
             fout.write(f.read())
 
 def delete_temp_file(mergedFile):
-    """
-    Deletes the merged file 
-    """
+    """ Deletes the merged file. """
     os.remove(mergedFile)
 
 def delete_old_timeframes(toDate, masterFile):
@@ -279,6 +276,9 @@ def delete_old_timeframes(toDate, masterFile):
     df.to_csv(masterFile, index=False)
 
 def main():
+    """
+    Main function that runs through the process of the program. 
+    """
     acyclicaRoutes = route_dict()
     acyclicaBaseURL = base_url_creation()
     for key, value in tqdm(acyclicaRoutes.items()):
