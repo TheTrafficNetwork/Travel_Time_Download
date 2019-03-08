@@ -141,7 +141,7 @@ def convert_to_epoch(fromDateUTC, toDateUTC):
     Takes the from and to time frames and converts them to time from epoch in seconds. 
     """
     epochTime = datetime.utcfromtimestamp(0)
-    epochTimeUTC = epochTime.replace(tzinfo=tz.tzutc())
+#   epochTimeUTC = epochTime.replace(tzinfo=tz.tzutc())
 #TODO check to see if the epcoh in UTC is needed or breaking the time system
     fromDateEpoch = int((fromDateUTC - epochTimeUTC).total_seconds())
     toDateEpoch = int((toDateUTC - epochTimeUTC).total_seconds())
