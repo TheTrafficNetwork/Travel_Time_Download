@@ -255,7 +255,7 @@ def append_new_timeframes(mergedFile, masterFile):
     """
     Appends the new temp file to the master file.
     """    
-    with open(masterFile,"wb") as fout:
+    with open(masterFile,"ab") as fout:
         with open(mergedFile, "rb") as f:
             next(f)
             fout.write(f.read())
