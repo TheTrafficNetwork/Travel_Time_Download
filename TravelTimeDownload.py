@@ -112,6 +112,8 @@ def start_end_times():
     Delta = EndDate - StartDate
     TotalDays = Delta.days + 1
     Epoch = datetime.utcfromtimestamp(0)
+    StartDate = StartDate.astimezone(tz.tzutc())
+    StartDate = StartDate.replace(tzinfo=None)
     StartDateInEpoch = StartDate - Epoch
     StartEpochSeconds = int((StartDateInEpoch).total_seconds())
     print(f"Requesting {TotalDays} total days of data.")
@@ -208,6 +210,7 @@ def format_new_files(CombinedFileToBeFormatted):
     df = df.replace(0, np.nan)
     df = df.resample('15min', base=0, on="Timestamp").mean()
     df = df.reset_index()
+    df["Timestamp"] = df["Timestamp"].dt.tz_localize('utc').dt.tz_convert('US/Central')
     df['Timestamp'] = pd.to_datetime(df['Timestamp'], unit='ms').apply(
         '{:%B %A %w %Y-%m-%d %H:%M:%S}'.format)
     df.Strengths = pd.to_timedelta(
