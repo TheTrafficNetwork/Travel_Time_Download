@@ -259,18 +259,12 @@ def append_new_timeframes(mergedFile, masterFile):
         with open(mergedFile, "rb") as f:
             next(f)
             fout.write(f.read())
+
+def delete_temp_file(mergedFile):
     """
-    with open(mergedFile, 'r') as f1:
-        merged = f1.read()
-
-    with open(masterFile, 'a') as f2:
-        f2.write('\n')
-        f2.write(merged)
+    Deletes the merged file 
     """
-
-
-
-
+    os.remove(mergedFile)
 
 def delete_old_timeframes(toDate, masterFile):
     """
