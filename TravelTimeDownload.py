@@ -112,8 +112,7 @@ def start_end_times():
     Delta = EndDate - StartDate
     TotalDays = Delta.days + 1
     Epoch = datetime.utcfromtimestamp(0)
-    StartDate = StartDate.astimezone(tz.tzutc())
-    StartDate = StartDate.replace(tzinfo=None)
+    StartDate = StartDate.astimezone(tz.tzutc()).replace(tzinfo=None)
     StartDateInEpoch = StartDate - Epoch
     StartEpochSeconds = int((StartDateInEpoch).total_seconds())
     print(f"Requesting {TotalDays} total days of data.")
