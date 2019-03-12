@@ -273,7 +273,7 @@ def delete_old_timeframes(toDate, masterFile):
     df.to_csv(masterFile, index=False)
 
 
-def main():
+def DailyTravelTimeDownload():
     """ Main function that runs through the process of the program. """
     acyclicaRoutes = route_dict()
     acyclicaBaseURL = base_url_creation()
@@ -295,4 +295,4 @@ def main():
 # print(f"Data downloaded {fromDateString} to {toDateString}.")
 
 if __name__ == "__main__":
-    main()
+    DailyTravelTimeDownload()
