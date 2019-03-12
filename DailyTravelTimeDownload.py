@@ -71,10 +71,10 @@ def folder_creation(routeName):
     downloadFolder = f"{routeFolder}/Downloads"
     if not os.path.isdir(routeFolder):
         os.makedirs(routeFolder)
-        print(f"New folder created at {routeFolder}")
+# TODO add to logs - print(f"New folder created at {routeFolder}")
     if not os.path.isdir(downloadFolder):
         os.makedirs(downloadFolder)
-        print(f"New Download folder created at {downloadFolder}")
+# TODO add to logs - print(f"New Download folder created at {downloadFolder}")
     return routeFolder, downloadFolder
 
 
@@ -85,7 +85,7 @@ def master_file_check(routeName, folderLocation):
     masterFile = f"{folderLocation}/{routeName} - Master.csv"
     if not os.path.isfile(masterFile):
         with open(masterFile, 'w') as newFile:
-            newFile.write("DateTime,Month,Day,DoW,Date,Time,Strengths,Firsts,Lasts,Minimums,Maximums")
+            newFile.write("DateTime,Month,Day,DoW,Date,Time,Strengths,Firsts,Lasts,Minimums,Maximums\n")
     return masterFile
 
 
@@ -143,7 +143,7 @@ def epoch_differences(start, finish):
     return daysRequested, remainingSeconds
 
 
-def loop_download(folder, start, url, days, seconds, routeID, routeName):
+def loop_download(url, routeID, routeName, folder, start, days, seconds):
     """
     Creates the start and end times for each period in the total requested set of data. Forwards each time period to the download module.
     """
@@ -158,11 +158,11 @@ def loop_download(folder, start, url, days, seconds, routeID, routeName):
             if day < (days - 1):
                 endTime = str(start + (86400 * (day + 1)))
             else:
-                endTime = str(start + (86400 * day) + secondsRemaining)
-            download_file(url, routeID, startTime, endTime, folder, routeName)
+                endTime = str(start + (86400 * day) + seconds)
+            download_file(url, routeID, routeName, folder, startTime, endTime)
 
 
-def download_file(url, routeID, startTime, endTime, folder, routeName):
+def download_file(url, routeID, routeName, folder, startTime, endTime):
     """
     Downloads up to a 24 hour period of data from Acyclica's site using thier API url and specifying a new file name for each download. 
     """
@@ -176,12 +176,12 @@ def merge_downloaded_files(routeFolder, downloadFolder, value):
     Takes the first 6 columes of every .csv in SubFolder and concatenates them into a single csv in the main folder.
     """
     csvFiles = glob.glob(downloadFolder + '/*.csv')
-    MergedFile = pd.concat(pd.read_csv(
+    mergedFile = pd.concat(pd.read_csv(
         f, index_col=[0, 1, 2, 3, 4, 5]) for f in csvFiles)
-    combinedFile = f"{routeFolder}/{value} temp.csv"
-    MergedFile.to_csv(combinedFile)
+    mergedFilePath = f"{routeFolder}/{value} temp.csv"
+    mergedFile.to_csv(mergedFilePath)
     delete_downloaded_files(downloadFolder)
-    return combinedFile
+    return mergedFilePath
 
 
 def delete_downloaded_files(downloadFolder):
@@ -201,7 +201,7 @@ def timedelta_h_m_s(delta):
     return'{:0>2}:{:0>2}:{:0>2}'.format(h, m, s)
 
 
-def format_new_files(mergedFile):
+def format_new_files(mergedFilePath):
     """
     Formats the combined file for use in Excel
     -Removes lines containing 0s (missing data) as to not influence averages
@@ -209,7 +209,7 @@ def format_new_files(mergedFile):
     -Converts ms into h:mm:ss formatting
     -Splits datatime into multiple columns for different Excel formulas
     """
-    df = pd.read_csv(mergedFile)
+    df = pd.read_csv(mergedFilePath)
     df["Timestamp"] = pd.to_datetime(df["Timestamp"], unit='ms')
     df = df.replace(0, np.nan)
     df = df.resample('15min', base=0, on="Timestamp").mean()
@@ -240,24 +240,24 @@ def format_new_files(mergedFile):
     del df['Timestamp']
     df = df[['DateTime', 'Month', 'Day', 'DoW', 'Date', 'Time',
              'Strengths', 'Firsts', 'Lasts', 'Minimums', 'Maximums']]
-    df.to_csv(mergedFile, index=False)
+    df.to_csv(mergedFilePath, index=False)
 
 
-def append_new_timeframes(mergedFile, masterFile):
+def append_new_timeframes(mergedFilePath, masterFile):
     """
     Appends the new temp file to the master file.
     """    
     with open(masterFile,"ab") as fout:
-        with open(mergedFile, "rb") as f:
+        with open(mergedFilePath, "rb") as f:
             next(f)
             fout.write(f.read())
 # TODO put a check in to make sure the files were appended before deleting
-    delete_temp_file(mergedfile)
+    delete_temp_file(mergedFilePath)
 
 
-def delete_temp_file(mergedFile):
+def delete_temp_file(mergedFilePath):
     """ Deletes the merged file. """
-    os.remove(mergedFile)
+    os.remove(mergedFilePath)
 
 
 def delete_old_timeframes(toDate, masterFile):
@@ -267,7 +267,7 @@ def delete_old_timeframes(toDate, masterFile):
     deleteYear = toDate.strftime('%Y')
     deleteToYear = int(deleteYear) - 2
     deleteToDate = toDate.replace(year = deleteToYear)
-    deleteToDateString = datetime.strptime(deleteToDate, '%Y-%m-%d %H:%M:%S')
+    deleteToDateString = datetime.strftime(deleteToDate, '%Y-%m-%d %H:%M:%S')
     df = pd.read_csv(masterFile)
     df.drop(df[df["DateTime"] < deleteToDateString ].index, inplace = True)
     df.to_csv(masterFile, index=False)
@@ -285,10 +285,10 @@ def main():
         toDate, toDateString, toDateUTC = midnight_today()
         fromDateEpoch, toDateEpoch = convert_to_epoch(fromDateUTC, toDateUTC)
         wDays, extraSec = epoch_differences(fromDateEpoch, toDateEpoch)
-        loop_download(downloadFolder, fromDateEpoch, acyclicaBaseURL, wDays, extraSec, key, value)
-        mergedFile = merge_downloaded_files(routeFolder, downloadFolder, value)
-        format_new_files(mergedFile)
-        append_new_timeframes(mergedFile, masterFile)
+        loop_download(acyclicaBaseURL, key, value, downloadFolder, fromDateEpoch, wDays,extraSec)
+        mergedFilePath = merge_downloaded_files(routeFolder, downloadFolder, value)
+        format_new_files(mergedFilePath)
+        append_new_timeframes(mergedFilePath, masterFile)
         delete_old_timeframes(toDate, masterFile)
 
 #if __name__ == "__main__":
