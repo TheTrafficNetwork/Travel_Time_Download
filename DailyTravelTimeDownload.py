@@ -285,8 +285,20 @@ def DailyTravelTimeDownload():
         toDate, toDateString, toDateUTC = midnight_today()
         fromDateEpoch, toDateEpoch = convert_to_epoch(fromDateUTC, toDateUTC)
         wDays, extraSec = epoch_differences(fromDateEpoch, toDateEpoch)
-        loop_download(acyclicaBaseURL, key, value, downloadFolder, fromDateEpoch, wDays,extraSec)
-        mergedFilePath = merge_downloaded_files(routeFolder, downloadFolder, value)
+        loop_download(
+            acyclicaBaseURL, 
+            key, 
+            value, 
+            downloadFolder, 
+            fromDateEpoch, 
+            wDays, 
+            extraSec
+        )
+        mergedFilePath = merge_downloaded_files(
+            routeFolder, 
+            downloadFolder, 
+            value
+        )
         format_new_files(mergedFilePath)
         append_new_timeframes(mergedFilePath, masterFile)
         delete_old_timeframes(toDate, masterFile)
