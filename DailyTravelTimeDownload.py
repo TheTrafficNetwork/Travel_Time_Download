@@ -128,8 +128,8 @@ def convert_to_epoch(fromDateUTC, toDateUTC):
     epochTime = datetime.utcfromtimestamp(0)
 #   epochTimeUTC = epochTime.replace(tzinfo=tz.tzutc())
 # TODO check to see if the epcoh in UTC is needed or breaking the time system
-    fromDateEpoch = int((fromDateUTC - epochTimeUTC).total_seconds())
-    toDateEpoch = int((toDateUTC - epochTimeUTC).total_seconds())
+    fromDateEpoch = int((fromDateUTC - epochTime).total_seconds())
+    toDateEpoch = int((toDateUTC - epochTime).total_seconds())
     return fromDateEpoch, toDateEpoch
 
 
