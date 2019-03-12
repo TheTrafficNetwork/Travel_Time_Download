@@ -291,5 +291,8 @@ def main():
         append_new_timeframes(mergedFilePath, masterFile)
         delete_old_timeframes(toDate, masterFile)
 
-#if __name__ == "__main__":
-#    main()
+# TODO log downloading data fromDateString toDateString
+# print(f"Data downloaded {fromDateString} to {toDateString}.")
+
+if __name__ == "__main__":
+    main()
