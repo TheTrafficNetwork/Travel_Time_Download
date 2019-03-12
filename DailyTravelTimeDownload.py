@@ -57,7 +57,7 @@ def route_dict():
 def base_url_creation():
     """Creates the base of the url download request with the API"""
     Base_URL = f"https://cr.acyclica.com/datastream/route/csv/time"
-    APIKey = "qAgh5gIDungtzIuC1dyRBMfimhwKQlWm2hhdROA4"
+    APIKey = open("API_KEY.csv", "r").readline()
     apiURL = f"{Base_URL}/{APIKey}"
     return apiURL
 
