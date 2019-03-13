@@ -151,7 +151,7 @@ def loop_download(url, routeID, routeName, folder, start, days, seconds):
         for day in range(days):
             startTime = str(start + (86400 * day))
             endTime = str(start + (86400 * (day + 1)))
-            download_file(url, routeID, startTime, endTime, folder, routeName)
+            download_file(url, routeID, routeName, folder, startTime, endTime)
     else:
         for day in range(days):
             startTime = str(start + (86400 * day))
