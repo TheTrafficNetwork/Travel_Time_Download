@@ -3,12 +3,17 @@ TO DO LIST
 
 ### Current Code
 - [x] Modify time pulls for local time of both daylight savings and standard. Currently pulls UDT time frames.
-- [ ] Condense formatting code
-- [ ] Multithread the download and format section for quicker run times
-- [ ] Make sure the Download folder is empty BEFORE downloads start as to not incorporate eroneous data
-- [ ] Incorporate error handling of HTTP failures
-- [ ] Prompt user for file location for apikey and routes OR ask user input if default file location is not found
-- [ ] Prompt user for save location (have a default)
+- [x] Create master files for each route that contain 2 years worth of data.
+- [x] Skip over up to date files.
+- [ ] Interpolate over short data gaps (1 to 3 time periods possibly?)
+- [ ] Condense formatting code.
+- [ ] Multithread the download and format section for quicker run times.
+- [ ] Make sure the Download folder is empty BEFORE downloads start as to not incorporate eroneous data.
+- [ ] Incorporate error handling of HTTP failures.
+- [ ] Prompt user for file location for apikey and routes OR ask user input if default file location is not found.
+- [ ] Prompt user for save location (have a default).
+- [ ] Create a log file for both errors and successful downloads to write to.
+- [ ] Email upon errors for dailydownload to know when to check for issues. 
 
  
 ### Future Code
@@ -23,4 +28,4 @@ TO DO LIST
 - [x] Create a ReadMe
 - [ ] Create a Setup
 - [ ] Create Requirements
-- [ ] Figure out proper structuring of project files/folder
+- [ ] Proper structuring of project files/folder
