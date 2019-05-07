@@ -219,7 +219,10 @@ def format_new_files(mergedFilePath):
     df = df.resample('15min', base=0, on="Timestamp").mean()
 # TODO possible interpolate over x amount of Nan rows? Max of 1-3?
     df = df.reset_index()
-    df["Timestamp"] = df["Timestamp"].dt.tz_localize('utc').dt.tz_convert('US/Central')
+    df["Timestamp"] = (df["Timestamp"]
+                      .dt.tz_localize('utc')
+                      .dt.tz_convert('US/Central')
+                      )
     df['Timestamp'] = pd.to_datetime(df['Timestamp'], unit='ms').apply(
         '{:%B %A %w %Y-%m-%d %H:%M:%S}'.format)
     df.Strengths = pd.to_timedelta(
@@ -288,7 +291,10 @@ def DailyTravelTimeDownload():
         fromDate, fromDateUTC = download_from_date(lastDate)
         toDate, toDateUTC = midnight_today()
         if toDate > fromDate:
-            fromDateEpoch, toDateEpoch = convert_to_epoch(fromDateUTC, toDateUTC)
+            fromDateEpoch, toDateEpoch = convert_to_epoch(
+                fromDateUTC, 
+                toDateUTC
+                )
             wDays, extraSec = epoch_differences(fromDateEpoch, toDateEpoch)
             loop_download(
                 acyclicaBaseURL, 
