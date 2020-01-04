@@ -45,7 +45,7 @@ def route_dict():
     and folder creation.
     """
     try:
-        routeCSV = open(r"C:/Python Test Folder 2/AcyclicaArterialRoutes.csv")
+        routeCSV = open(r"C:\PythonTest\test.csv")
         routeDict = {}
         for line in routeCSV:
             entry = line.strip()
@@ -71,8 +71,8 @@ def folder_creation(routeName):
     Creates the folder structure for a route if there are no folders currently 
     present.
     """
-    routeFolder = f"C:/Python Test Folder 2/{routeName}"
-    downloadFolder = f"{routeFolder}/Downloads"
+    routeFolder = f"C:\PythonTest\{routeName}"
+    downloadFolder = f"{routeFolder}\\Downloads"
     if not os.path.isdir(routeFolder):
         os.makedirs(routeFolder)
 # TODO add to logs - print(f"New folder created at {routeFolder}")
@@ -86,10 +86,10 @@ def master_file_check(routeName, folderLocation):
     """
     Sets the location of the master file for each route. Checks to see if file exists. If it does not, then it creates it with applicable headers.
     """
-    masterFile = f"{folderLocation}/{routeName} - Master.csv"
+    masterFile = f"{folderLocation}\{routeName} - Master.csv"
     if not os.path.isfile(masterFile):
         with open(masterFile, 'w') as newFile:
-            newFile.write("DateTime,Month,Day,DoW,Date,Time,Strengths,Firsts,Lasts,Minimums,Maximums\n")
+            newFile.write("DateTime,Month,Day,DoW,Date,Time,Strengths,Firsts,Lasts,Minimums,Maximums\n2017-12-26 23:45:00,December,Tuesday,26,2017-12-26,23:45:00,00:02:28,00:02:26,00:02:30,00:02:16,00:02:37\n")
         #TODO Need to move find date before this point so that we can populate a generic time line from 2 years ago so that get_last_date can have a reference for the beginning download.
     return masterFile
 
@@ -214,6 +214,7 @@ def format_new_files(mergedFilePath):
     -Converts ms into h:mm:ss formatting
     -Splits datatime into multiple columns for different Excel formulas
     """
+# TODO try statement, if no data, continue
     df = pd.read_csv(mergedFilePath)
     df["Timestamp"] = pd.to_datetime(df["Timestamp"], unit='ms')
     df = df.replace(0, np.nan)
