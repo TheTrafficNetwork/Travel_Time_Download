@@ -72,7 +72,7 @@ def folder_creation(routeName):
     present.
     """
     routeFolder = f"C:\PythonTest\{routeName}"
-    downloadFolder = f"{routeFolder}\\Downloads"
+    downloadFolder = f"{routeFolder}\Downloads"
     if not os.path.isdir(routeFolder):
         os.makedirs(routeFolder)
 # TODO add to logs - print(f"New folder created at {routeFolder}")
@@ -89,7 +89,7 @@ def master_file_check(routeName, folderLocation):
     masterFile = f"{folderLocation}\{routeName} - Master.csv"
     if not os.path.isfile(masterFile):
         with open(masterFile, 'w') as newFile:
-            newFile.write("DateTime,Month,Day,DoW,Date,Time,Strengths,Firsts,Lasts,Minimums,Maximums\n2017-12-26 23:45:00,December,Tuesday,26,2017-12-26,23:45:00,00:02:28,00:02:26,00:02:30,00:02:16,00:02:37\n")
+            newFile.write("DateTime,Month,Day,DoW,Date,Time,Strengths,Firsts,Lasts,Minimums,Maximums\n2020-01-04 23:45:00,January,Saturday,04,2020-01-04,23:45:00,00:00:00,00:00:00,00:00:00,00:00:00,00:00:00\n")
         #TODO Need to move find date before this point so that we can populate a generic time line from 2 years ago so that get_last_date can have a reference for the beginning download.
     return masterFile
 
@@ -214,17 +214,19 @@ def format_new_files(mergedFilePath):
     -Converts ms into h:mm:ss formatting
     -Splits datatime into multiple columns for different Excel formulas
     """
-# TODO try statement, if no data, continue
+# TODO try statement, if no data, continue. Kinda taken care off with the len check option on line 219
     df = pd.read_csv(mergedFilePath)
+    if len(df.index) is 0 or len(df.index) is 1:
+        df.loc[0] = [int(time.time()*1000),0,0,0,0,0]
     df["Timestamp"] = pd.to_datetime(df["Timestamp"], unit='ms')
     df = df.replace(0, np.nan)
     df = df.resample('15min', base=0, on="Timestamp").mean()
 # TODO possible interpolate over x amount of Nan rows? Max of 1-3?
     df = df.reset_index()
     df["Timestamp"] = (df["Timestamp"]
-                      .dt.tz_localize('utc')
-                      .dt.tz_convert('US/Central')
-                      )
+                    .dt.tz_localize('utc')
+                    .dt.tz_convert('US/Central')
+                    )
     df['Timestamp'] = pd.to_datetime(df['Timestamp'], unit='ms').apply(
         '{:%B %A %w %Y-%m-%d %H:%M:%S}'.format)
     df.Strengths = pd.to_timedelta(
@@ -248,7 +250,7 @@ def format_new_files(mergedFilePath):
         '{:%Y-%m-%d %H:%M:%S}'.format)
     del df['Timestamp']
     df = df[['DateTime', 'Month', 'Day', 'DoW', 'Date', 'Time',
-             'Strengths', 'Firsts', 'Lasts', 'Minimums', 'Maximums']]
+            'Strengths', 'Firsts', 'Lasts', 'Minimums', 'Maximums']]
     df.to_csv(mergedFilePath, index=False)
 
 
