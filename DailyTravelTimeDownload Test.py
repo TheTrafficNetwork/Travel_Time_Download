@@ -71,8 +71,8 @@ def folder_creation(routeName):
     Creates the folder structure for a route if there are no folders currently 
     present.
     """
-    routeFolder = f"C:\PythonTest\{routeName}"
-    downloadFolder = f"{routeFolder}\Downloads"
+    routeFolder = f"C:\\PythonTest\\{routeName}"
+    downloadFolder = f"{routeFolder}\\Downloads"
     if not os.path.isdir(routeFolder):
         os.makedirs(routeFolder)
 # TODO add to logs - print(f"New folder created at {routeFolder}")
