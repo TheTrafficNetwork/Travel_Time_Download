@@ -30,12 +30,11 @@ import time
 import urllib
 from datetime import datetime, timedelta
 from dateutil import tz
+from tqdm import tqdm
 from urllib import request
 from urllib.request import urlretrieve
-import pandas as pd
 import numpy as np
-from tqdm import tqdm
-
+import pandas as pd
 
 
 def route_dict():
