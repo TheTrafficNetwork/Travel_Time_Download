@@ -37,7 +37,6 @@ import numpy as np
 from tqdm import tqdm
 
 
-
 def route_dict():
     """
     Trys to open a csv file containing Acyclica Route IDs,Route Names and 
@@ -49,12 +48,14 @@ def route_dict():
         routeDict = {}
         for line in routeCSV:
             entry = line.strip()
-            routeID, routeName = entry.split(',')
+            routeID, routeName = entry.split(",")
             routeDict[routeID] = routeName
     except FileNotFoundError:
         # TODO add the printout to a log file
-        print("The .csv file containing routes cannot be found. "
-              + "Please check file location")
+        print(
+            "The .csv file containing routes cannot be found. "
+            + "Please check file location"
+        )
     return routeDict
 
 
@@ -75,10 +76,10 @@ def folder_creation(routeName):
     downloadFolder = f"{routeFolder}/Downloads"
     if not os.path.isdir(routeFolder):
         os.makedirs(routeFolder)
-# TODO add to logs - print(f"New folder created at {routeFolder}")
+    # TODO add to logs - print(f"New folder created at {routeFolder}")
     if not os.path.isdir(downloadFolder):
         os.makedirs(downloadFolder)
-# TODO add to logs - print(f"New Download folder created at {downloadFolder}")
+    # TODO add to logs - print(f"New Download folder created at {downloadFolder}")
     return routeFolder, downloadFolder
 
 
@@ -88,9 +89,11 @@ def master_file_check(routeName, folderLocation):
     """
     masterFile = f"{folderLocation}/{routeName} - Master.csv"
     if not os.path.isfile(masterFile):
-        with open(masterFile, 'w') as newFile:
-            newFile.write("DateTime,Month,Day,DoW,Date,Time,Strengths,Firsts,Lasts,Minimums,Maximums\n")
-        #TODO Need to move find date before this point so that we can populate a generic time line from 2 years ago so that get_last_date can have a reference for the beginning download.
+        with open(masterFile, "w") as newFile:
+            newFile.write(
+                "DateTime,Month,Day,DoW,Date,Time,Strengths,Firsts,Lasts,Minimums,Maximums\n"
+            )
+        # TODO Need to move find date before this point so that we can populate a generic time line from 2 years ago so that get_last_date can have a reference for the beginning download.
     return masterFile
 
 
@@ -98,11 +101,11 @@ def get_last_date(masterFile):
     """
     Reads the master .csv file for the route requested. 
     TODO If not date exists, needs to create a date for 2 years and 15 min prior.
-    """ 
+    """
     df = pd.read_csv(masterFile)
     lastDateString = max(df["DateTime"])
-# TODO - add try with except ValueError: max() arg is an empy sequence
-    lastDate = datetime.strptime(lastDateString, '%Y-%m-%d %H:%M:%S')
+    # TODO - add try with except ValueError: max() arg is an empy sequence
+    lastDate = datetime.strptime(lastDateString, "%Y-%m-%d %H:%M:%S")
     return lastDate
 
 
@@ -110,9 +113,9 @@ def download_from_date(lastDate):
     """
     Adds 15 minuets to the lastDate from the master file to reference a starting point for the downloads.
     """
-    fromDate = lastDate + timedelta(minutes = 15)
+    fromDate = lastDate + timedelta(minutes=15)
     # fromDateString = fromDate.strftime('%Y-%m-%d %H:%M:%S')
-    fromDateUTC = fromDate.astimezone(tz.tzutc()).replace(tzinfo = None)
+    fromDateUTC = fromDate.astimezone(tz.tzutc()).replace(tzinfo=None)
     return fromDate, fromDateUTC
 
 
@@ -120,9 +123,9 @@ def midnight_today():
     """
     Calculates the date and time of the midnight just recently passed to be used as an end time.
     """
-    toDate = datetime.today().replace(hour=0,minute=0,second=0,microsecond=0)
+    toDate = datetime.today().replace(hour=0, minute=0, second=0, microsecond=0)
     # toDateString = toDate.strftime('%Y-%m-%d %H:%M:%S')
-    toDateUTC = toDate.astimezone(tz.tzutc()).replace(tzinfo = None)
+    toDateUTC = toDate.astimezone(tz.tzutc()).replace(tzinfo=None)
     return toDate, toDateUTC
 
 
@@ -131,8 +134,8 @@ def convert_to_epoch(fromDateUTC, toDateUTC):
     Takes the from and to time frames and converts them to time from epoch in seconds. 
     """
     epochTime = datetime.utcfromtimestamp(0)
-#   epochTimeUTC = epochTime.replace(tzinfo=tz.tzutc())
-# TODO check to see if the epcoh in UTC is needed or breaking the time system
+    #   epochTimeUTC = epochTime.replace(tzinfo=tz.tzutc())
+    # TODO check to see if the epcoh in UTC is needed or breaking the time system
     fromDateEpoch = int((fromDateUTC - epochTime).total_seconds())
     toDateEpoch = int((toDateUTC - epochTime).total_seconds())
     return fromDateEpoch, toDateEpoch
@@ -143,7 +146,7 @@ def epoch_differences(start, finish):
     Calculates total days between the fromDate and toDate along with remainder to give reference for the download loop. i.e. 1.5 days = 129600 seconds. days = 1 with partialDays = 43200 as remainder. Loop would run for daysRequested. Request URL would go startEpoch to (startEpoch + 86400) for the first loop and (startEpoch + 86400) to (startEpoch + 86400 + 43200) for the second.
     """
     deltaSeconds = finish - start
-    daysRequested = ( - ( - deltaSeconds // 86400 ))
+    daysRequested = -(-deltaSeconds // 86400)
     remainingSeconds = deltaSeconds % 86400
     return daysRequested, remainingSeconds
 
@@ -180,9 +183,10 @@ def merge_downloaded_files(routeFolder, downloadFolder, value):
     """
     Takes the first 6 columes of every .csv in SubFolder and concatenates them into a single csv in the main folder.
     """
-    csvFiles = glob.glob(downloadFolder + '/*.csv')
-    mergedFile = pd.concat(pd.read_csv(
-        f, index_col=[0, 1, 2, 3, 4, 5]) for f in csvFiles)
+    csvFiles = glob.glob(downloadFolder + "/*.csv")
+    mergedFile = pd.concat(
+        pd.read_csv(f, index_col=[0, 1, 2, 3, 4, 5]) for f in csvFiles
+    )
     mergedFilePath = f"{routeFolder}/{value} temp.csv"
     mergedFile.to_csv(mergedFilePath)
     delete_downloaded_files(downloadFolder)
@@ -194,8 +198,8 @@ def delete_downloaded_files(downloadFolder):
     Cycles through all files in downloadFolder and deletes every .csv file
     """
     for fileName in os.listdir(downloadFolder):
-        if fileName.endswith('.csv'):
-            os.remove(f'{downloadFolder}/{fileName}')
+        if fileName.endswith(".csv"):
+            os.remove(f"{downloadFolder}/{fileName}")
 
 
 def timedelta_h_m_s(delta):
@@ -203,7 +207,7 @@ def timedelta_h_m_s(delta):
     h = delta.seconds // 60 // 60
     m = delta.seconds // 60
     s = delta.seconds % 60
-    return'{:0>2}:{:0>2}:{:0>2}'.format(h, m, s)
+    return "{:0>2}:{:0>2}:{:0>2}".format(h, m, s)
 
 
 def format_new_files(mergedFilePath):
@@ -215,51 +219,58 @@ def format_new_files(mergedFilePath):
     -Splits datatime into multiple columns for different Excel formulas
     """
     df = pd.read_csv(mergedFilePath)
-    df["Timestamp"] = pd.to_datetime(df["Timestamp"], unit='ms')
+    df["Timestamp"] = pd.to_datetime(df["Timestamp"], unit="ms")
     df = df.replace(0, np.nan)
-    df = df.resample('15min', base=0, on="Timestamp").mean()
-# TODO possible interpolate over x amount of Nan rows? Max of 1-3?
+    df = df.resample("15min", base=0, on="Timestamp").mean()
+    # TODO possible interpolate over x amount of Nan rows? Max of 1-3?
     df = df.reset_index()
-    df["Timestamp"] = (df["Timestamp"]
-                      .dt.tz_localize('utc')
-                      .dt.tz_convert('US/Central')
-                      )
-    df['Timestamp'] = pd.to_datetime(df['Timestamp'], unit='ms').apply(
-        '{:%B %A %w %Y-%m-%d %H:%M:%S}'.format)
-    df.Strengths = pd.to_timedelta(
-        df.Strengths, unit='ms').apply(timedelta_h_m_s)
-    df.Firsts = pd.to_timedelta(df.Firsts, unit='ms').apply(timedelta_h_m_s)
-    df.Lasts = pd.to_timedelta(df.Lasts, unit='ms').apply(timedelta_h_m_s)
-    df.Minimums = pd.to_timedelta(
-        df.Minimums, unit='ms').apply(timedelta_h_m_s)
-    df.Maximums = pd.to_timedelta(
-        df.Maximums, unit='ms').apply(timedelta_h_m_s)
-    df['Month'] = df.Timestamp.str.split(' ').str.get(0)
-    df['Day'] = df.Timestamp.str.split(' ').str.get(1)
-    df['DoW'] = df.Timestamp.str.split(' ').str.get(2)
-    df['Date'] = df.Timestamp.str.split(' ').str.get(3)
-    df['Time'] = df.Timestamp.str.split(' ').str.get(4)
-    df['DoW'] = df['DoW'].astype(int)
+    df["Timestamp"] = df["Timestamp"].dt.tz_localize("utc").dt.tz_convert("US/Central")
+    df["Timestamp"] = pd.to_datetime(df["Timestamp"], unit="ms").apply(
+        "{:%B %A %w %Y-%m-%d %H:%M:%S}".format
+    )
+    df.Strengths = pd.to_timedelta(df.Strengths, unit="ms").apply(timedelta_h_m_s)
+    df.Firsts = pd.to_timedelta(df.Firsts, unit="ms").apply(timedelta_h_m_s)
+    df.Lasts = pd.to_timedelta(df.Lasts, unit="ms").apply(timedelta_h_m_s)
+    df.Minimums = pd.to_timedelta(df.Minimums, unit="ms").apply(timedelta_h_m_s)
+    df.Maximums = pd.to_timedelta(df.Maximums, unit="ms").apply(timedelta_h_m_s)
+    df["Month"] = df.Timestamp.str.split(" ").str.get(0)
+    df["Day"] = df.Timestamp.str.split(" ").str.get(1)
+    df["DoW"] = df.Timestamp.str.split(" ").str.get(2)
+    df["Date"] = df.Timestamp.str.split(" ").str.get(3)
+    df["Time"] = df.Timestamp.str.split(" ").str.get(4)
+    df["DoW"] = df["DoW"].astype(int)
     df.DoW = df.DoW + 1
-    df['DateTime'] = df.Date + " " + df.Time
-    df['Date'] = pd.to_datetime(df['Date']).apply('{:%Y-%m-%d}'.format)
-    df['DateTime'] = pd.to_datetime(df['DateTime']).apply(
-        '{:%Y-%m-%d %H:%M:%S}'.format)
-    del df['Timestamp']
-    df = df[['DateTime', 'Month', 'Day', 'DoW', 'Date', 'Time',
-             'Strengths', 'Firsts', 'Lasts', 'Minimums', 'Maximums']]
+    df["DateTime"] = df.Date + " " + df.Time
+    df["Date"] = pd.to_datetime(df["Date"]).apply("{:%Y-%m-%d}".format)
+    df["DateTime"] = pd.to_datetime(df["DateTime"]).apply("{:%Y-%m-%d %H:%M:%S}".format)
+    del df["Timestamp"]
+    df = df[
+        [
+            "DateTime",
+            "Month",
+            "Day",
+            "DoW",
+            "Date",
+            "Time",
+            "Strengths",
+            "Firsts",
+            "Lasts",
+            "Minimums",
+            "Maximums",
+        ]
+    ]
     df.to_csv(mergedFilePath, index=False)
 
 
 def append_new_timeframes(mergedFilePath, masterFile):
     """
     Appends the new temp file to the master file.
-    """    
-    with open(masterFile,"ab") as fout:
+    """
+    with open(masterFile, "ab") as fout:
         with open(mergedFilePath, "rb") as f:
             next(f)
             fout.write(f.read())
-# TODO put a check in to make sure the files were appended before deleting
+    # TODO put a check in to make sure the files were appended before deleting
     delete_temp_file(mergedFilePath)
 
 
@@ -272,12 +283,12 @@ def delete_old_timeframes(toDate, masterFile):
     """
     Reads the master file for the Route and deletes entries older than 2 years.
     """
-    deleteYear = toDate.strftime('%Y')
+    deleteYear = toDate.strftime("%Y")
     deleteToYear = int(deleteYear) - 2
-    deleteToDate = toDate.replace(year = deleteToYear)
-    deleteToDateString = datetime.strftime(deleteToDate, '%Y-%m-%d %H:%M:%S')
+    deleteToDate = toDate.replace(year=deleteToYear)
+    deleteToDateString = datetime.strftime(deleteToDate, "%Y-%m-%d %H:%M:%S")
     df = pd.read_csv(masterFile)
-    df.drop(df[df["DateTime"] < deleteToDateString ].index, inplace = True)
+    df.drop(df[df["DateTime"] < deleteToDateString].index, inplace=True)
     df.to_csv(masterFile, index=False)
 
 
@@ -292,30 +303,24 @@ def DailyTravelTimeDownload():
         fromDate, fromDateUTC = download_from_date(lastDate)
         toDate, toDateUTC = midnight_today()
         if toDate > fromDate:
-            fromDateEpoch, toDateEpoch = convert_to_epoch(
-                fromDateUTC, 
-                toDateUTC
-                )
+            fromDateEpoch, toDateEpoch = convert_to_epoch(fromDateUTC, toDateUTC)
             wDays, extraSec = epoch_differences(fromDateEpoch, toDateEpoch)
             loop_download(
-                acyclicaBaseURL, 
-                key, 
-                value, 
-                downloadFolder, 
-                fromDateEpoch, 
-                wDays, 
-                extraSec
+                acyclicaBaseURL,
+                key,
+                value,
+                downloadFolder,
+                fromDateEpoch,
+                wDays,
+                extraSec,
             )
-            mergedFilePath = merge_downloaded_files(
-                routeFolder, 
-                downloadFolder, 
-                value
-            )
+            mergedFilePath = merge_downloaded_files(routeFolder, downloadFolder, value)
             format_new_files(mergedFilePath)
             append_new_timeframes(mergedFilePath, masterFile)
             delete_old_timeframes(toDate, masterFile)
         else:
             continue
+
 
 # TODO log downloading data fromDateString toDateString
 # print(f"Data downloaded {fromDateString} to {toDateString}.")
