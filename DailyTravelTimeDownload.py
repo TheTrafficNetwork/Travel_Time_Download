@@ -1,18 +1,18 @@
 #!/usr/bin/env python3
 """
-Program to utilize Acyclica's API to download travel time data. Looks for a 
-master file for each route specified in the route dictionary. If no master 
-file exists, it will create one. Each master file will hold up to 2 years 
-worth of travel time data for comparison purposes. This process will check the 
-last date of each master file and download all missing data from the last date 
-to the last midnight passed before the current time. Times are converted to 
-epoch and adjusted for timezones to place in the API URL. Downloads are 
-processed in 24 hour periods, or less if missing a partial day, and looped 
-until caught up to the current day. All downloads are merged, formatted, and 
-appended to the master. After the new data has been added, time frames greater 
-than two years will be removed. 
+Program to utilize Acyclica's API to download travel time data. Looks for a
+master file for each route specified in the route dictionary. If no master
+file exists, it will create one. Each master file will hold up to 2 years
+worth of travel time data for comparison purposes. This process will check the
+last date of each master file and download all missing data from the last date
+to the last midnight passed before the current time. Times are converted to
+epoch and adjusted for timezones to place in the API URL. Downloads are
+processed in 24 hour periods, or less if missing a partial day, and looped
+until caught up to the current day. All downloads are merged, formatted, and
+appended to the master. After the new data has been added, time frames greater
+than two years will be removed.
 
-Sample URL = 
+Sample URL =
 https://cr.acyclica.com/datastream/route/csv/time/APIKey/Route/Start/End/
 
 Acyclica's API Guide:
@@ -39,8 +39,8 @@ from tqdm import tqdm
 
 def route_dict():
     """
-    Trys to open a csv file containing Acyclica Route IDs,Route Names and 
-    places them in a dictionary to be used for download URLs as well as file 
+    Trys to open a csv file containing Acyclica Route IDs,Route Names and
+    places them in a dictionary to be used for download URLs as well as file
     and folder creation.
     """
     try:
@@ -69,7 +69,7 @@ def base_url_creation():
 
 def folder_creation(routeName):
     """
-    Creates the folder structure for a route if there are no folders currently 
+    Creates the folder structure for a route if there are no folders currently
     present.
     """
     routeFolder = f"C:/Python Test Folder 2/{routeName}"
@@ -99,7 +99,7 @@ def master_file_check(routeName, folderLocation):
 
 def get_last_date(masterFile):
     """
-    Reads the master .csv file for the route requested. 
+    Reads the master .csv file for the route requested.
     TODO If not date exists, needs to create a date for 2 years and 15 min prior.
     """
     df = pd.read_csv(masterFile)
@@ -131,7 +131,7 @@ def midnight_today():
 
 def convert_to_epoch(fromDateUTC, toDateUTC):
     """
-    Takes the from and to time frames and converts them to time from epoch in seconds. 
+    Takes the from and to time frames and converts them to time from epoch in seconds.
     """
     epochTime = datetime.utcfromtimestamp(0)
     #   epochTimeUTC = epochTime.replace(tzinfo=tz.tzutc())
@@ -172,7 +172,7 @@ def loop_download(url, routeID, routeName, folder, start, days, seconds):
 
 def download_file(url, routeID, routeName, folder, startTime, endTime):
     """
-    Downloads up to a 24 hour period of data from Acyclica's site using thier API url and specifying a new file name for each download. 
+    Downloads up to a 24 hour period of data from Acyclica's site using thier API url and specifying a new file name for each download.
     """
     acyclicaURL = f"{url}/{routeID}/{startTime}/{endTime}/"
     fileName = f"{folder}/{routeName} {startTime}.csv"
