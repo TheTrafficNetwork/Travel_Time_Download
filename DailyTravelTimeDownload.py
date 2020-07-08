@@ -44,7 +44,7 @@ def route_dict():
     and folder creation.
     """
     try:
-        routeCSV = open(r"C:/Python Test Folder 2/AcyclicaArterialRoutes.csv")
+        routeCSV = open(r"C:\AcyclicaTravelTimes\AcyclicaRoutes.csv")
         routeDict = {}
         for line in routeCSV:
             entry = line.strip()
@@ -54,7 +54,7 @@ def route_dict():
         # TODO add the printout to a log file
         print(
             "The .csv file containing routes cannot be found. "
-            + "Please check file location"
+            + "Please check file location."
         )
     return routeDict
 
@@ -62,8 +62,14 @@ def route_dict():
 def base_url_creation():
     """Creates the base of the url download request with the API"""
     Base_URL = f"https://cr.acyclica.com/datastream/route/csv/time"
-    APIKey = open("API_KEY.csv", "r").readline()
-    apiURL = f"{Base_URL}/{APIKey}"
+    try:
+        APIKey = open(r"C:\AcyclicaTravelTimes\API_KEY.csv", "r").readline()
+    except FileNotFoundError:
+        print(
+            "The .csv file containing API information cannot be found. "
+            + "Please check file location."
+        )
+    apiURL = f"{Base_URL}\\{APIKey}"
     return apiURL
 
 
@@ -72,8 +78,8 @@ def folder_creation(routeName):
     Creates the folder structure for a route if there are no folders currently
     present.
     """
-    routeFolder = f"C:/Python Test Folder 2/{routeName}"
-    downloadFolder = f"{routeFolder}/Downloads"
+    routeFolder = f"C:\\AcyclicaTravelTimes\\{routeName}"
+    downloadFolder = f"{routeFolder}\\Downloads"
     if not os.path.isdir(routeFolder):
         os.makedirs(routeFolder)
     # TODO add to logs - print(f"New folder created at {routeFolder}")
@@ -87,7 +93,7 @@ def master_file_check(routeName, folderLocation):
     """
     Sets the location of the master file for each route. Checks to see if file exists. If it does not, then it creates it with applicable headers.
     """
-    masterFile = f"{folderLocation}/{routeName} - Master.csv"
+    masterFile = f"{folderLocation}\\{routeName} - Master.csv"
     if not os.path.isfile(masterFile):
         with open(masterFile, "w") as newFile:
             newFile.write(
@@ -216,7 +222,7 @@ def format_new_files(mergedFilePath):
     -Removes lines containing 0s (missing data) as to not influence averages
     -Averages based on 15min time periods
     -Converts ms into h:mm:ss formatting
-    -Splits datatime into multiple columns for different Excel formulas
+    -Splits datetime into multiple columns for different Excel formulas
     """
     df = pd.read_csv(mergedFilePath)
     df["Timestamp"] = pd.to_datetime(df["Timestamp"], unit="ms")
