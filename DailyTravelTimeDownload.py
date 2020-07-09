@@ -42,6 +42,9 @@ def route_dict():
     Trys to open a csv file containing Acyclica Route IDs,Route Names and
     places them in a dictionary to be used for download URLs as well as file
     and folder creation.
+
+    Returns:
+        routeDict (dictionary): Routes and Route IDs combinations
     """
     try:
         routeCSV = open(r"C:\AcyclicaTravelTimes\AcyclicaRoutes.csv")
@@ -60,7 +63,12 @@ def route_dict():
 
 
 def base_url_creation():
-    """Creates the base of the url download request with the API"""
+    """
+    Creates the base of the url download request with the API
+
+    Returns:
+        apiURL (string): URL used in Acyclica's API to download data
+    """
     Base_URL = f"https://cr.acyclica.com/datastream/route/csv/time"
     try:
         APIKey = open(r"C:\AcyclicaTravelTimes\API_KEY.csv", "r").readline()
@@ -77,6 +85,13 @@ def folder_creation(routeName):
     """
     Creates the folder structure for a route if there are no folders currently
     present.
+
+    Args:
+        routeName (string): Name of route being downloaded
+
+    Returns:
+        routeFolder (string): Location of folder for the route
+        downloadFolder (string): Location of folder to download data to
     """
     routeFolder = f"C:\\AcyclicaTravelTimes\\{routeName}"
     downloadFolder = f"{routeFolder}\\Downloads"
@@ -90,9 +105,16 @@ def folder_creation(routeName):
 
 
 def check_old_files(downloadFolder):
+    """
+    Checks downloadFolder to see if there are any files left over and deletes
+    them if so.
+
+    Args:
+        downloadFolder (String): [Folder location for downloading travel times]
+    """
     if os.path.exists(downloadFolder) and os.path.isdir(downloadFolder):
         if not os.listdir(downloadFolder):
-            continue
+            pass
         else:
             # TODO add to logs that file is cleaned
             for fileName in os.listdir(downloadFolder):
@@ -101,7 +123,15 @@ def check_old_files(downloadFolder):
 
 def master_file_check(routeName, folderLocation):
     """
-    Sets the location of the master file for each route. Checks to see if file exists. If it does not, then it creates it with applicable headers.
+    Sets the location of the master file for each route. Checks to see if file
+    exists. If it does not, then it creates it with applicable headers.
+
+    Args:
+        routeName (string): Name of the route going to be downloaded
+        folderLocation (string): Location where the route files will be located
+
+    Returns:
+        masterFile (string): Name of the file where travel times are kept
     """
     masterFile = f"{folderLocation}\\{routeName} - Master.csv"
     if not os.path.isfile(masterFile):
@@ -116,7 +146,14 @@ def master_file_check(routeName, folderLocation):
 def get_last_date(masterFile):
     """
     Reads the master .csv file for the route requested.
-    TODO If not date exists, needs to create a date for 2 years and 15 min prior.
+    TODO If not date exists, needs to create a date for 2 years and 15 min
+    prior.
+
+    Args:
+        masterFile (string): Location of the main file containing route data
+
+    Returns:
+        lastDate (datetime): Lastest date for data in the master file
     """
     df = pd.read_csv(masterFile)
     lastDateString = max(df["DateTime"])
@@ -127,7 +164,15 @@ def get_last_date(masterFile):
 
 def download_from_date(lastDate):
     """
-    Adds 15 minuets to the lastDate from the master file to reference a starting point for the downloads.
+    Adds 15 minuets to the lastDate from the master file to reference a
+    starting point for the downloads.
+
+    Args:
+        lastDate (datetime): Latest date for the data in the master file
+
+    Returns:
+        fromDate (datetime): Date to start downloading data from
+        fromDateUTC (datetime): fromDate in UTC timezone
     """
     fromDate = lastDate + timedelta(minutes=15)
     # fromDateString = fromDate.strftime('%Y-%m-%d %H:%M:%S')
@@ -137,7 +182,12 @@ def download_from_date(lastDate):
 
 def midnight_today():
     """
-    Calculates the date and time of the midnight just recently passed to be used as an end time.
+    Calculates the date and time of the midnight just recently passed to be
+    used as an end time.
+
+    Returns:
+        toDate (datetime): Date to download data to. Yesterday's midnight.
+        toDateUTC (datetime): toDate in UTC
     """
     toDate = datetime.today().replace(hour=0, minute=0, second=0, microsecond=0)
     # toDateString = toDate.strftime('%Y-%m-%d %H:%M:%S')
@@ -147,7 +197,16 @@ def midnight_today():
 
 def convert_to_epoch(fromDateUTC, toDateUTC):
     """
-    Takes the from and to time frames and converts them to time from epoch in seconds.
+    Takes the from and to time frames and converts them to time from epoch in
+    seconds.
+
+    Args:
+        fromDateUTC (datetime): Starting date for downloading data
+        toDateUTC (datetime): Ending date for downloading data
+
+    Returns:
+        fromDateEpoch (int): Epoch conversion of fromDateUTC for API use
+        toDateEpoch (int): Epoch converstion of toDateUTC for API use
     """
     epochTime = datetime.utcfromtimestamp(0)
     #   epochTimeUTC = epochTime.replace(tzinfo=tz.tzutc())
@@ -160,6 +219,14 @@ def convert_to_epoch(fromDateUTC, toDateUTC):
 def epoch_differences(start, finish):
     """
     Calculates total days between the fromDate and toDate along with remainder to give reference for the download loop. i.e. 1.5 days = 129600 seconds. days = 1 with partialDays = 43200 as remainder. Loop would run for daysRequested. Request URL would go startEpoch to (startEpoch + 86400) for the first loop and (startEpoch + 86400) to (startEpoch + 86400 + 43200) for the second.
+
+    Args:
+        start (int): Start time of download date range
+        finish (int): End time of download date range
+
+    Returns:
+        daysRequested (int): Number of days requested in download
+        remaningSeconds (int): Number of seconds left over not totalling a day
     """
     deltaSeconds = finish - start
     daysRequested = -(-deltaSeconds // 86400)
@@ -169,7 +236,17 @@ def epoch_differences(start, finish):
 
 def loop_download(url, routeID, routeName, folder, start, days, seconds):
     """
-    Creates the start and end times for each period in the total requested set of data. Forwards each time period to the download module.
+    Creates the start and end times for each period in the total requested set
+    of data. Forwards each time period to the download module.
+
+    Args:
+        url (string): url used for Acyclica's API
+        routeID (string): The ID of the route being downloaded
+        routeName (string): Name of the route being downloaded
+        folder (string): location for the download to save to
+        start (int): starting epoch time of the download date range
+        days (int): number of days to download data for
+        seconds (int): extra seconds that don't fill a day to download data for
     """
     if seconds == 0:
         for day in range(days):
