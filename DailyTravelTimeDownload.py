@@ -89,6 +89,16 @@ def folder_creation(routeName):
     return routeFolder, downloadFolder
 
 
+def check_old_files(downloadFolder):
+    if os.path.exists(downloadFolder) and os.path.isdir(downloadFolder):
+        if not os.listdir(downloadFolder):
+            continue
+        else:
+            # TODO add to logs that file is cleaned
+            for fileName in os.listdir(downloadFolder):
+                os.remove(f"{downloadFolder}/{fileName}")
+
+
 def master_file_check(routeName, folderLocation):
     """
     Sets the location of the master file for each route. Checks to see if file exists. If it does not, then it creates it with applicable headers.

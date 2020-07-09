@@ -13,16 +13,16 @@ TO DO LIST
 - [ ] Prompt user for file location for apikey and routes OR ask user input if default file location is not found.
 - [ ] Prompt user for save location (have a default).
 - [ ] Create a log file for both errors and successful downloads to write to.
-- [ ] Email upon errors for dailydownload to know when to check for issues. 
+- [ ] Email upon errors for dailydownload to know when to check for issues.
 
- 
+
 ### Future Code
 - [x] Create a single master file for each route that is referenced for start day and downloads missing days through local time
 - [x] Auto download every day at 2am from last download point for each route
 - [ ] Combine all master files into a database
 - [ ] Create graphical displays that compare different date ranges/time of day periods so Excel processing is no longer needed
- 
- 
+
+
 ### Files
 - [x] Create a To Do List
 - [x] Create a ReadMe
