@@ -137,7 +137,7 @@ def master_file_check(routeName, folderLocation):
     if not os.path.isfile(masterFile):
         with open(masterFile, "w") as newFile:
             newFile.write(
-                "DateTime,Month,Day,DoW,Date,Time,Strengths,Firsts,Lasts,Minimums,Maximums\n"
+                "DateTime,Month,Day,DoW,Date,Time,Strengths,Firsts,Lasts,Minimums,Maximums\n2020-05-31 23:45:00,May,Sunday,31,2020-05-31,23:45:00,00:00:00,00:00:00,00:00:00,00:00:00,00:00:00\n"
             )
         # TODO Need to move find date before this point so that we can populate a generic time line from 2 years ago so that get_last_date can have a reference for the beginning download.
     return masterFile
@@ -218,7 +218,12 @@ def convert_to_epoch(fromDateUTC, toDateUTC):
 
 def epoch_differences(start, finish):
     """
-    Calculates total days between the fromDate and toDate along with remainder to give reference for the download loop. i.e. 1.5 days = 129600 seconds. days = 1 with partialDays = 43200 as remainder. Loop would run for daysRequested. Request URL would go startEpoch to (startEpoch + 86400) for the first loop and (startEpoch + 86400) to (startEpoch + 86400 + 43200) for the second.
+    Calculates total days between the fromDate and toDate along with remainder
+    to give reference for the download loop. i.e. 1.5 days = 129600 seconds.
+    days = 1 with partialDays = 43200 as remainder. Loop would run for
+    daysRequested. Request URL would go startEpoch to (startEpoch + 86400) for
+    the first loop and (startEpoch + 86400) to (startEpoch + 86400 + 43200) for
+    the second.
 
     Args:
         start (int): Start time of download date range
@@ -265,7 +270,16 @@ def loop_download(url, routeID, routeName, folder, start, days, seconds):
 
 def download_file(url, routeID, routeName, folder, startTime, endTime):
     """
-    Downloads up to a 24 hour period of data from Acyclica's site using thier API url and specifying a new file name for each download.
+    Downloads up to a 24 hour period of data from Acyclica's site using their
+    API url and specifying a new file name for each download.
+
+    Args:
+        url (string): url used for Acyclica's API
+        routeID (string): The ID of the route being downloaded
+        routeName (string): Name of the route being downloaded
+        folder (string): location for the download to save to
+        startTime (string): starting time in epoch to insert into url
+        endTime (string): ending time in epoch to insert into url
     """
     acyclicaURL = f"{url}/{routeID}/{startTime}/{endTime}/"
     fileName = f"{folder}/{routeName} {startTime}.csv"
@@ -274,7 +288,16 @@ def download_file(url, routeID, routeName, folder, startTime, endTime):
 
 def merge_downloaded_files(routeFolder, downloadFolder, value):
     """
-    Takes the first 6 columes of every .csv in SubFolder and concatenates them into a single csv in the main folder.
+    Takes the first 6 columes of every .csv in SubFolder and concatenates them
+    into a single csv in the main folder.
+
+    Args:
+        routeFolder (string): Folder containing all of a route's data
+        downloadFolder (string): Folder where all data is downloaded
+        value (string): Name of route for downloaded data
+
+    Returns:
+        mergedFilePath: Location of merged file containing downloaded data
     """
     csvFiles = glob.glob(downloadFolder + "/*.csv")
     mergedFile = pd.concat(
@@ -289,6 +312,9 @@ def merge_downloaded_files(routeFolder, downloadFolder, value):
 def delete_downloaded_files(downloadFolder):
     """
     Cycles through all files in downloadFolder and deletes every .csv file
+
+    Args:
+        downloadFolder (string): Location of the folder for downloading data
     """
     for fileName in os.listdir(downloadFolder):
         if fileName.endswith(".csv"):
@@ -296,7 +322,14 @@ def delete_downloaded_files(downloadFolder):
 
 
 def timedelta_h_m_s(delta):
-    """Formatting conversion of ms to hh:mm:ss for travel times."""
+    """Formatting conversion of ms to hh:mm:ss for travel times.
+
+    Args:
+        delta (datetime): milliseconds of travel time
+
+    Returns:
+        datetime: time in hh:mm:ss format
+    """
     h = delta.seconds // 60 // 60
     m = delta.seconds // 60
     s = delta.seconds % 60
@@ -310,6 +343,9 @@ def format_new_files(mergedFilePath):
     -Averages based on 15min time periods
     -Converts ms into h:mm:ss formatting
     -Splits datetime into multiple columns for different Excel formulas
+
+    Args:
+        mergedFilePath (string): Location of the downloaded merged data
     """
     df = pd.read_csv(mergedFilePath)
     df["Timestamp"] = pd.to_datetime(df["Timestamp"], unit="ms")
@@ -358,6 +394,10 @@ def format_new_files(mergedFilePath):
 def append_new_timeframes(mergedFilePath, masterFile):
     """
     Appends the new temp file to the master file.
+
+    Args:
+        mergedFilePath (string): Location of the downloaded merged data
+        masterFile (string): Location of the master file for the route
     """
     with open(masterFile, "ab") as fout:
         with open(mergedFilePath, "rb") as f:
@@ -368,13 +408,22 @@ def append_new_timeframes(mergedFilePath, masterFile):
 
 
 def delete_temp_file(mergedFilePath):
-    """ Deletes the merged file. """
+    """
+    Deletes the merged file
+
+    Args:
+        mergedFilePath (string): Location of the downloaded merged data
+    """
     os.remove(mergedFilePath)
 
 
 def delete_old_timeframes(toDate, masterFile):
     """
-    Reads the master file for the Route and deletes entries older than 2 years.
+    Reads the master file for the Route and deletes entries older than 2 years
+
+    Args:
+        toDate (datetime): Date of last downloaded data
+        masterFile (string): Location of the master file for the route
     """
     deleteYear = toDate.strftime("%Y")
     deleteToYear = int(deleteYear) - 2
@@ -385,8 +434,10 @@ def delete_old_timeframes(toDate, masterFile):
     df.to_csv(masterFile, index=False)
 
 
-def DailyTravelTimeDownload():
-    """ Main function that runs through the process of the program. """
+def download_data():
+    """
+    Main function that runs through the process of the program
+    """
     acyclicaRoutes = route_dict()
     acyclicaBaseURL = base_url_creation()
     for key, value in tqdm(acyclicaRoutes.items()):
@@ -419,4 +470,4 @@ def DailyTravelTimeDownload():
 # print(f"Data downloaded {fromDateString} to {toDateString}.")
 
 if __name__ == "__main__":
-    DailyTravelTimeDownload()
+    download_data()
