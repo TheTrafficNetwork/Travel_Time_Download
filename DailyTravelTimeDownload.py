@@ -27,10 +27,8 @@ import os
 import os.path
 import sys
 import time
-import urllib
 from datetime import datetime, timedelta
 from dateutil import tz
-from urllib import request
 from urllib.request import urlretrieve
 import pandas as pd
 import numpy as np
@@ -283,7 +281,7 @@ def download_file(url, routeID, routeName, folder, startTime, endTime):
     """
     acyclicaURL = f"{url}/{routeID}/{startTime}/{endTime}/"
     fileName = f"{folder}/{routeName} {startTime}.csv"
-    urllib.request.urlretrieve(acyclicaURL, fileName)
+    urlretrieve(acyclicaURL, fileName)
 
 
 def merge_downloaded_files(routeFolder, downloadFolder, value):
