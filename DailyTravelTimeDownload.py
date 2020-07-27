@@ -25,11 +25,13 @@ import datetime
 import glob
 import os
 import os.path
+import requests
 import sys
 import time
 from datetime import datetime, timedelta
 from dateutil import tz
-from urllib.request import urlretrieve
+
+# from urllib.request import urlretrieve
 import pandas as pd
 import numpy as np
 from tqdm import tqdm
@@ -45,7 +47,8 @@ def route_dict():
         routeDict (dictionary): Routes and Route IDs combinations
     """
     try:
-        routeCSV = open(r"C:\AcyclicaTravelTimes\AcyclicaRoutes.csv")
+        # routeCSV = open(r"C:\AcyclicaTravelTimes\AcyclicaRoutes.csv")
+        routeCSV = open("route.csv")
         routeDict = {}
         for line in routeCSV:
             entry = line.strip()
@@ -69,13 +72,13 @@ def base_url_creation():
     """
     Base_URL = f"https://cr.acyclica.com/datastream/route/csv/time"
     try:
-        APIKey = open(r"C:\AcyclicaTravelTimes\API_KEY.csv", "r").readline()
+        APIKey = open(r"API_KEY.csv", "r").readline()
     except FileNotFoundError:
         print(
             "The .csv file containing API information cannot be found. "
             + "Please check file location."
         )
-    apiURL = f"{Base_URL}\\{APIKey}"
+    apiURL = f"{Base_URL}/{APIKey}"
     return apiURL
 
 
@@ -91,7 +94,7 @@ def folder_creation(routeName):
         routeFolder (string): Location of folder for the route
         downloadFolder (string): Location of folder to download data to
     """
-    routeFolder = f"C:\\AcyclicaTravelTimes\\{routeName}"
+    routeFolder = f"{routeName}"
     downloadFolder = f"{routeFolder}\\Downloads"
     if not os.path.isdir(routeFolder):
         os.makedirs(routeFolder)
@@ -252,12 +255,12 @@ def loop_download(url, routeID, routeName, folder, start, days, seconds):
         seconds (int): extra seconds that don't fill a day to download data for
     """
     if seconds == 0:
-        for day in range(days):
+        for day in tqdm(range(days), desc=f"Downloading {routeName}"):
             startTime = str(start + (86400 * day))
             endTime = str(start + (86400 * (day + 1)))
             download_file(url, routeID, routeName, folder, startTime, endTime)
     else:
-        for day in range(days):
+        for day in tqdm(range(days), desc=f"Downloading {routeName}"):
             startTime = str(start + (86400 * day))
             if day < (days - 1):
                 endTime = str(start + (86400 * (day + 1)))
@@ -281,7 +284,15 @@ def download_file(url, routeID, routeName, folder, startTime, endTime):
     """
     acyclicaURL = f"{url}/{routeID}/{startTime}/{endTime}/"
     fileName = f"{folder}/{routeName} {startTime}.csv"
-    urlretrieve(acyclicaURL, fileName)
+    # Legacy request to download
+    # urlretrieve(acyclicaURL, fileName)
+    routeData = requests.get(acyclicaURL)
+    with open(fileName, "wb") as file:
+        if routeData.status_code != 200:
+            raise ConnectionError(
+                f"Error downloading route: {routeName} with ID: {routeID}.\nTime frame : {startTime} to {endTime}.\nError Code: {routeData.status_code}\nURL: {acyclicaURL}"
+            )
+        file.write(routeData.content)
 
 
 def merge_downloaded_files(routeFolder, downloadFolder, value):
@@ -432,13 +443,19 @@ def delete_old_timeframes(toDate, masterFile):
     df.to_csv(masterFile, index=False)
 
 
-def download_data():
+def download_from_acyclica():
     """
-    Main function that runs through the process of the program
+    Main function that runs through the process to download route data.
+    - Creates a dictionary of Route IDs and Route Names.
+    - Creates the base for url used by Acyclicas API to retrieve data.
+    - For each route in the dictionary of routes:
+        - Downloads data starting from the last date in the master file.
+        - Formats data and merges into the master file while purging duplicates.
+        - Deletes data older than 2 years from the last date downloaded.
     """
     acyclicaRoutes = route_dict()
     acyclicaBaseURL = base_url_creation()
-    for key, value in tqdm(acyclicaRoutes.items()):
+    for key, value in tqdm(acyclicaRoutes.items(), desc="Download All"):
         routeFolder, downloadFolder = folder_creation(value)
         masterFile = master_file_check(value, routeFolder)
         lastDate = get_last_date(masterFile)
@@ -468,4 +485,4 @@ def download_data():
 # print(f"Data downloaded {fromDateString} to {toDateString}.")
 
 if __name__ == "__main__":
-    download_data()
+    download_from_acyclica()
