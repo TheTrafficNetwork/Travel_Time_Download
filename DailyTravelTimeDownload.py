@@ -30,8 +30,6 @@ import sys
 import time
 from datetime import datetime, timedelta
 from dateutil import tz
-
-# from urllib.request import urlretrieve
 import pandas as pd
 import numpy as np
 from tqdm import tqdm
@@ -48,7 +46,7 @@ def route_dict():
     """
     try:
         # routeCSV = open(r"C:\AcyclicaTravelTimes\AcyclicaRoutes.csv")
-        routeCSV = open("route.csv")
+        routeCSV = open("AcyclicaRoutes.csv")
         routeDict = {}
         for line in routeCSV:
             entry = line.strip()
@@ -94,7 +92,7 @@ def folder_creation(routeName):
         routeFolder (string): Location of folder for the route
         downloadFolder (string): Location of folder to download data to
     """
-    routeFolder = f"{routeName}"
+    routeFolder = f"AcyclicaData\\{routeName}"
     downloadFolder = f"{routeFolder}\\Downloads"
     if not os.path.isdir(routeFolder):
         os.makedirs(routeFolder)
@@ -176,7 +174,6 @@ def download_from_date(lastDate):
         fromDateUTC (datetime): fromDate in UTC timezone
     """
     fromDate = lastDate + timedelta(minutes=15)
-    # fromDateString = fromDate.strftime('%Y-%m-%d %H:%M:%S')
     fromDateUTC = fromDate.astimezone(tz.tzutc()).replace(tzinfo=None)
     return fromDate, fromDateUTC
 
@@ -191,7 +188,6 @@ def midnight_today():
         toDateUTC (datetime): toDate in UTC
     """
     toDate = datetime.today().replace(hour=0, minute=0, second=0, microsecond=0)
-    # toDateString = toDate.strftime('%Y-%m-%d %H:%M:%S')
     toDateUTC = toDate.astimezone(tz.tzutc()).replace(tzinfo=None)
     return toDate, toDateUTC
 
@@ -210,7 +206,6 @@ def convert_to_epoch(fromDateUTC, toDateUTC):
         toDateEpoch (int): Epoch converstion of toDateUTC for API use
     """
     epochTime = datetime.utcfromtimestamp(0)
-    #   epochTimeUTC = epochTime.replace(tzinfo=tz.tzutc())
     # TODO check to see if the epcoh in UTC is needed or breaking the time system
     fromDateEpoch = int((fromDateUTC - epochTime).total_seconds())
     toDateEpoch = int((toDateUTC - epochTime).total_seconds())
@@ -284,8 +279,6 @@ def download_file(url, routeID, routeName, folder, startTime, endTime):
     """
     acyclicaURL = f"{url}/{routeID}/{startTime}/{endTime}/"
     fileName = f"{folder}/{routeName} {startTime}.csv"
-    # Legacy request to download
-    # urlretrieve(acyclicaURL, fileName)
     routeData = requests.get(acyclicaURL)
     with open(fileName, "wb") as file:
         if routeData.status_code != 200:
@@ -482,7 +475,6 @@ def download_from_acyclica():
 
 
 # TODO log downloading data fromDateString toDateString
-# print(f"Data downloaded {fromDateString} to {toDateString}.")
 
 if __name__ == "__main__":
     download_from_acyclica()
