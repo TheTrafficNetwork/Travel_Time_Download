@@ -45,7 +45,6 @@ def route_dict():
         routeDict (dictionary): Routes and Route IDs combinations
     """
     try:
-        # routeCSV = open(r"C:\AcyclicaTravelTimes\AcyclicaRoutes.csv")
         routeCSV = open("AcyclicaRoutes.csv")
         routeDict = {}
         for line in routeCSV:
