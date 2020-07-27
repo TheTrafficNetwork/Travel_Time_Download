@@ -1,2 +1,6 @@
 def structure.txt
 API_Key.csv
+AcyclicaData/
+AcyclicaRoutes.csv
+.vscode/
+__pycache__/
