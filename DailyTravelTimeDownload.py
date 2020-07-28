@@ -135,7 +135,7 @@ def master_file_check(routeName, folderLocation):
     if not os.path.isfile(masterFile):
         with open(masterFile, "w") as newFile:
             newFile.write(
-                "DateTime,Month,Day,DoW,Date,Time,Strengths,Firsts,Lasts,Minimums,Maximums\n2020-05-31 23:45:00,May,Sunday,31,2020-05-31,23:45:00,00:00:00,00:00:00,00:00:00,00:00:00,00:00:00\n"
+                "DateTime,Month,Day,DoW,Date,Time,Strengths,Firsts,Lasts,Minimums,Maximums\n2020-04-30 23:45:00,April,Thursday,30,2020-04-30,23:45:00,00:00:00,00:00:00,00:00:00,00:00:00,00:00:00\n"
             )
         # TODO Need to move find date before this point so that we can populate a generic time line from 2 years ago so that get_last_date can have a reference for the beginning download.
     return masterFile
@@ -173,6 +173,7 @@ def download_from_date(lastDate):
         fromDateUTC (datetime): fromDate in UTC timezone
     """
     fromDate = lastDate + timedelta(minutes=15)
+    fromDateString = fromDate.strftime("%Y-%m-%d %H:%M:%S")
     fromDateUTC = fromDate.astimezone(tz.tzutc()).replace(tzinfo=None)
     return fromDate, fromDateUTC
 
@@ -187,6 +188,7 @@ def midnight_today():
         toDateUTC (datetime): toDate in UTC
     """
     toDate = datetime.today().replace(hour=0, minute=0, second=0, microsecond=0)
+    toDateString = toDate.strftime("%Y-%m-%d %H:%M:%S")
     toDateUTC = toDate.astimezone(tz.tzutc()).replace(tzinfo=None)
     return toDate, toDateUTC
 
@@ -335,6 +337,10 @@ def timedelta_h_m_s(delta):
     m = delta.seconds // 60
     s = delta.seconds % 60
     return "{:0>2}:{:0>2}:{:0>2}".format(h, m, s)
+
+
+def file_check(mergedFilePath,):
+    pass
 
 
 def format_new_files(mergedFilePath):
