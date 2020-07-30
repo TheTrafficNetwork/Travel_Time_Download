@@ -173,7 +173,6 @@ def download_from_date(lastDate):
         fromDateUTC (datetime): fromDate in UTC timezone
     """
     fromDate = lastDate + timedelta(minutes=15)
-    fromDateString = fromDate.strftime("%Y-%m-%d %H:%M:%S")
     fromDateUTC = fromDate.astimezone(tz.tzutc()).replace(tzinfo=None)
     return fromDate, fromDateUTC
 
@@ -188,7 +187,6 @@ def midnight_today():
         toDateUTC (datetime): toDate in UTC
     """
     toDate = datetime.today().replace(hour=0, minute=0, second=0, microsecond=0)
-    toDateString = toDate.strftime("%Y-%m-%d %H:%M:%S")
     toDateUTC = toDate.astimezone(tz.tzutc()).replace(tzinfo=None)
     return toDate, toDateUTC
 
@@ -339,11 +337,29 @@ def timedelta_h_m_s(delta):
     return "{:0>2}:{:0>2}:{:0>2}".format(h, m, s)
 
 
-def file_check(mergedFilePath,):
-    pass
+def file_fill(df, fromDateEpoch, toDateEpoch):
+    """
+    If downloaded data is empty, i.e. detector was offline, for the entire time
+    period downloaded, fill in the .csv with blank data for the start and end
+    times to prevent future downloading of blank data. Start and end times are
+    converted from epoch seconds to milliseconds due to the data downloads
+    being in milliseconds.
+
+    Args:
+        df (dataframe): pandas dataframe of the merged .csv file (blank)
+        fromDateEpoch (int): Epoch version of the fromDate in seconds
+        toDateEpoch (int): Epoch version of the toDate in seconds
+
+    Returns:
+        df (dataframe): dataframe with a start and end time added (in ms)
+    """
+    timeRange = [str(fromDateEpoch * 1000), str(toDateEpoch * 1000)]
+    for time in timeRange:
+        df = df.append({"Timestamp": time}, ignore_index=True)
+    return df
 
 
-def format_new_files(mergedFilePath):
+def format_new_files(mergedFilePath, fromDateEpoch, toDateEpoch):
     """
     Formats the combined file for use in Excel
     -Removes lines containing 0s (missing data) as to not influence averages
@@ -352,9 +368,13 @@ def format_new_files(mergedFilePath):
     -Splits datetime into multiple columns for different Excel formulas
 
     Args:
-        mergedFilePath (string): Location of the downloaded merged data
+        mergedFilePath (Epoch): Location of the downloaded merged data
+        fromDateEpoch (int): Epoch version of the fromDate
+        toDateEpoch (int): Epoch version of the toDate
     """
     df = pd.read_csv(mergedFilePath)
+    if df.empty == True:
+        df = file_fill(df, fromDateEpoch, toDateEpoch)
     df["Timestamp"] = pd.to_datetime(df["Timestamp"], unit="ms")
     df = df.replace(0, np.nan)
     df = df.resample("15min", base=0, on="Timestamp").mean()
@@ -472,7 +492,7 @@ def download_from_acyclica():
                 extraSec,
             )
             mergedFilePath = merge_downloaded_files(routeFolder, downloadFolder, value)
-            format_new_files(mergedFilePath)
+            format_new_files(mergedFilePath, fromDateEpoch, toDateEpoch)
             append_new_timeframes(mergedFilePath, masterFile)
             delete_old_timeframes(toDate, masterFile)
         else:
