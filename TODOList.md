@@ -8,8 +8,8 @@ TO DO LIST
 - [ ] Interpolate over short data gaps (1 to 3 time periods possibly?)
 - [ ] Condense formatting code.
 - [ ] Multithread the download and format section for quicker run times.
-- [ ] Make sure the Download folder is empty BEFORE downloads start as to not incorporate eroneous data.
-- [ ] Incorporate error handling of HTTP failures.
+- [x] Make sure the Download folder is empty BEFORE downloads start as to not incorporate eroneous data.
+- [x] Incorporate error handling of HTTP failures.
 - [ ] Prompt user for file location for apikey and routes OR ask user input if default file location is not found.
 - [ ] Prompt user for save location (have a default).
 - [ ] Create a log file for both errors and successful downloads to write to.
@@ -27,5 +27,5 @@ TO DO LIST
 - [x] Create a To Do List
 - [x] Create a ReadMe
 - [ ] Create a Setup
-- [ ] Create Requirements
+- [x] Create Requirements
 - [ ] Proper structuring of project files/folder
