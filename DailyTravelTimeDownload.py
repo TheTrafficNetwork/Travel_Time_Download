@@ -7,7 +7,7 @@ worth of travel time data for comparison purposes. This process will check the
 last date of each master file and download all missing data from the last date
 to the last midnight passed before the current time. Times are converted to
 epoch and adjusted for timezones to place in the API URL. Downloads are
-processed in 24 hour periods, or less if missing a partial day, and looped
+processed in batches of 24 hour periods or less, and looped
 until caught up to the current day. All downloads are merged, formatted, and
 appended to the master. After the new data has been added, time frames greater
 than two years will be removed.
@@ -154,8 +154,10 @@ def get_last_date(masterFile):
         lastDate (datetime): Lastest date for data in the master file
     """
     df = pd.read_csv(masterFile)
-    lastDateString = max(df["DateTime"])
-    # TODO - add try with except ValueError: max() arg is an empy sequence
+    try:
+        lastDateString = max(df["DateTime"])
+    except ValueError:
+        print("No dates in the masterfile to get a max value from.")
     lastDate = datetime.strptime(lastDateString, "%Y-%m-%d %H:%M:%S")
     return lastDate
 
