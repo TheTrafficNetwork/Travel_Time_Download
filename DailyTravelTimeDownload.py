@@ -281,11 +281,11 @@ def download_file(url, routeID, routeName, folder, startTime, endTime):
     acyclicaURL = f"{url}/{routeID}/{startTime}/{endTime}/"
     fileName = f"{folder}/{routeName} {startTime}.csv"
     routeData = requests.get(acyclicaURL)
+    if routeData.status_code != 200:
+        raise ConnectionError(
+            f"\nError downloading route: {routeName} with ID: {routeID}.\nTime frame : {startTime} to {endTime}.\nError Code: {routeData.status_code}\nURL: {acyclicaURL}"
+        )
     with open(fileName, "wb") as file:
-        if routeData.status_code != 200:
-            raise ConnectionError(
-                f"Error downloading route: {routeName} with ID: {routeID}.\nTime frame : {startTime} to {endTime}.\nError Code: {routeData.status_code}\nURL: {acyclicaURL}"
-            )
         file.write(routeData.content)
 
 
