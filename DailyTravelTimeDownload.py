@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!python
 """
 Program to utilize Acyclica's API to download travel time data. Looks for a
 master file for each route specified in the route dictionary. If no master
