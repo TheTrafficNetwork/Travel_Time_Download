@@ -23,6 +23,7 @@ https://acyclica.zendesk.com/hc/en-us/articles/360003033252-API-Guide
 import csv
 import datetime
 import glob
+import logging
 import os
 import os.path
 import requests
@@ -34,6 +35,12 @@ import pandas as pd
 import numpy as np
 from tqdm import tqdm
 
+logging.basicConfig(
+    filename="Logs.txt",
+    level=logging.ERROR,
+    format="--- %(asctime)s - Line:%(lineno)d - %(levelname)s - %(message)s",
+)
+
 
 def route_dict():
     """
@@ -44,19 +51,20 @@ def route_dict():
     Returns:
         routeDict (dictionary): Routes and Route IDs combinations
     """
+    csvFile = "AcyclicaRoutes.csvs"
     try:
-        routeCSV = open("AcyclicaRoutes.csv")
-        routeDict = {}
-        for line in routeCSV:
-            entry = line.strip()
-            routeID, routeName = entry.split(",")
-            routeDict[routeID] = routeName
+        with open(csvFile) as routeCSV:
+            routeDict = {}
+            for line in routeCSV:
+                entry = line.strip()
+                routeID, routeName = entry.split(",")
+                routeDict[routeID] = routeName
     except FileNotFoundError:
-        # TODO add the printout to a log file
-        print(
-            "The .csv file containing routes cannot be found. "
-            + "Please check file location."
+        logging.error(
+            f"{csvFile} does not exist. Check naming convention and file structure."
         )
+        print(f"\nThe file: '{csvFile}' cannot be found. Please check file location.")
+        sys.exit(1)
     return routeDict
 
 
@@ -95,10 +103,10 @@ def folder_creation(routeName):
     downloadFolder = f"{routeFolder}\\Downloads"
     if not os.path.isdir(routeFolder):
         os.makedirs(routeFolder)
-    # TODO add to logs - print(f"New folder created at {routeFolder}")
+        logging.info(f"New folder created at {routeFolder}")
     if not os.path.isdir(downloadFolder):
         os.makedirs(downloadFolder)
-    # TODO add to logs - print(f"New Download folder created at {downloadFolder}")
+        logging.info(f"New Download folder created at {downloadFolder}")
     return routeFolder, downloadFolder
 
 
@@ -114,7 +122,7 @@ def check_old_files(downloadFolder):
         if not os.listdir(downloadFolder):
             pass
         else:
-            # TODO add to logs that file is cleaned
+            logging.info(f"Removed files left over in {downloadFolder}")
             for fileName in os.listdir(downloadFolder):
                 os.remove(f"{downloadFolder}/{fileName}")
 
@@ -502,6 +510,7 @@ def download_from_acyclica():
 
 
 # TODO log downloading data fromDateString toDateString
+
 
 if __name__ == "__main__":
     download_from_acyclica()
