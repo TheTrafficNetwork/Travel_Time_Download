@@ -37,9 +37,24 @@ from tqdm import tqdm
 
 logging.basicConfig(
     filename="Logs.txt",
-    level=logging.ERROR,
+    level=logging.INFO,
     format="--- %(asctime)s - Line:%(lineno)d - %(levelname)s - %(message)s",
 )
+
+
+def file_error(file):
+    """Error logging and program escape for missing files. Used in route_dict and base_url_creating when looking for the .csv of routes and the file containing the api key
+
+    Args:
+        file (string): Location of the file that is missing.
+    """
+    error = f"""
+        The file: '{file}' cannot be found.
+        Please check file location.
+        """
+    logging.error(error)
+    print(error)
+    sys.exit(1)
 
 
 def route_dict():
@@ -51,7 +66,7 @@ def route_dict():
     Returns:
         routeDict (dictionary): Routes and Route IDs combinations
     """
-    csvFile = "AcyclicaRoutes.csvs"
+    csvFile = "AcyclicaRoutes.csv"
     try:
         with open(csvFile) as routeCSV:
             routeDict = {}
@@ -60,11 +75,7 @@ def route_dict():
                 routeID, routeName = entry.split(",")
                 routeDict[routeID] = routeName
     except FileNotFoundError:
-        logging.error(
-            f"{csvFile} does not exist. Check naming convention and file structure."
-        )
-        print(f"\nThe file: '{csvFile}' cannot be found. Please check file location.")
-        sys.exit(1)
+        file_error(csvFile)
     return routeDict
 
 
@@ -75,14 +86,12 @@ def base_url_creation():
     Returns:
         apiURL (string): URL used in Acyclica's API to download data
     """
-    Base_URL = f"https://cr.acyclica.com/datastream/route/csv/time"
+    Base_URL = f"https://cr.acyclica.com/asdfdatastream/route/csv/time"
+    apiFile = "API_KEY.csv"
     try:
-        APIKey = open(r"API_KEY.csv", "r").readline()
+        APIKey = open(apiFile, "r").readline()
     except FileNotFoundError:
-        print(
-            "The .csv file containing API information cannot be found. "
-            + "Please check file location."
-        )
+        file_error(apiFile)
     apiURL = f"{Base_URL}/{APIKey}"
     return apiURL
 
@@ -228,7 +237,7 @@ def epoch_differences(start, finish):
     days = 1 with partialDays = 43200 as remainder. Loop would run for
     daysRequested. Request URL would go startEpoch to (startEpoch + 86400) for
     the first loop and (startEpoch + 86400) to (startEpoch + 86400 + 43200) for
-    the second.
+    the second. Uses a negative number for rounding up adding a day when extra seconds are present for the loop_download.
 
     Args:
         start (int): Start time of download date range
@@ -290,9 +299,14 @@ def download_file(url, routeID, routeName, folder, startTime, endTime):
     fileName = f"{folder}/{routeName} {startTime}.csv"
     routeData = requests.get(acyclicaURL)
     if routeData.status_code != 200:
-        raise ConnectionError(
-            f"\nError downloading route: {routeName} with ID: {routeID}.\nTime frame : {startTime} to {endTime}.\nError Code: {routeData.status_code}\nURL: {acyclicaURL}"
-        )
+        httpErrorMsg = f"""
+        Error downloading route: {routeName} with ID: {routeID}.
+        Time frame : {startTime} to {endTime}.
+        Error Code: {routeData.status_code}
+        URL: {acyclicaURL}
+        """
+        logging.error(httpErrorMsg)
+        raise ConnectionError(httpErrorMsg)
     with open(fileName, "wb") as file:
         file.write(routeData.content)
 
@@ -485,6 +499,7 @@ def download_from_acyclica():
     acyclicaBaseURL = base_url_creation()
     for key, value in tqdm(acyclicaRoutes.items(), desc="Download All"):
         routeFolder, downloadFolder = folder_creation(value)
+        check_old_files(downloadFolder)
         masterFile = master_file_check(value, routeFolder)
         lastDate = get_last_date(masterFile)
         fromDate, fromDateUTC = download_from_date(lastDate)
@@ -507,9 +522,6 @@ def download_from_acyclica():
             delete_old_timeframes(toDate, masterFile)
         else:
             continue
-
-
-# TODO log downloading data fromDateString toDateString
 
 
 if __name__ == "__main__":
