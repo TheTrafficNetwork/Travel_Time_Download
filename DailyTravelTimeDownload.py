@@ -237,7 +237,10 @@ def epoch_differences(start, finish):
     days = 1 with partialDays = 43200 as remainder. Loop would run for
     daysRequested. Request URL would go startEpoch to (startEpoch + 86400) for
     the first loop and (startEpoch + 86400) to (startEpoch + 86400 + 43200) for
-    the second. Uses a negative number for rounding up adding a day when extra seconds are present for the loop_download.
+    the second.
+
+    *Uses a double negative number to round up which adds a day when extra
+    seconds are present for the loop_download.
 
     Args:
         start (int): Start time of download date range
