@@ -3,3 +3,4 @@ API_Key.csv
 AcyclicaData/
 AcyclicaRoutes.csv
 Logs.txt
+__pycache__/
