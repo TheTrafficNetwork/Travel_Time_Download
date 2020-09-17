@@ -7,10 +7,10 @@ worth of travel time data for comparison purposes. This process will check the
 last date of each master file and download all missing data from the last date
 to the last midnight passed before the current time. Times are converted to
 epoch and adjusted for timezones to place in the API URL. Downloads are
-processed in batches of 24 hour periods or less, and looped
-until caught up to the current day. All downloads are merged, formatted, and
-appended to the master. After the new data has been added, time frames greater
-than two years will be removed.
+processed in batches of 24 hour periods or less, and looped until caught up to
+the current day. All downloads are merged, formatted, and appended to the
+master. After the new data has been added, time frames greater than two years
+will be removed.
 
 Sample URL =
 https://cr.acyclica.com/datastream/route/csv/time/APIKey/Route/Start/End/
@@ -21,7 +21,6 @@ https://acyclica.zendesk.com/hc/en-us/articles/360003033252-API-Guide
 
 
 import csv
-import datetime
 import glob
 import logging
 import os
@@ -43,7 +42,10 @@ logging.basicConfig(
 
 
 def file_error(file):
-    """Error logging and program escape for missing files. Used in route_dict and base_url_creating when looking for the .csv of routes and the file containing the api key
+    """
+    Error logging and program escape for missing files. Used in route_dict
+    and base_url_creating when looking for the .csv of routes and the file
+    containing the api key
 
     Args:
         file (string): Location of the file that is missing.
@@ -98,8 +100,8 @@ def base_url_creation():
 
 def folder_creation(routeName):
     """
-    Creates the folder structure for a route if there are no folders currently
-    present.
+    Creates the folder structure for a route if there are no folders
+    currently present.
 
     Args:
         routeName (string): Name of route being downloaded
@@ -125,7 +127,7 @@ def check_old_files(downloadFolder):
     them if so.
 
     Args:
-        downloadFolder (String): [Folder location for downloading travel times]
+        downloadFolder (String): Folder location for downloading travel times
     """
     if os.path.exists(downloadFolder) and os.path.isdir(downloadFolder):
         if not os.listdir(downloadFolder):
@@ -138,12 +140,13 @@ def check_old_files(downloadFolder):
 
 def master_file_check(routeName, folderLocation):
     """
-    Sets the location of the master file for each route. Checks to see if file
-    exists. If it does not, then it creates it with applicable headers.
+    Sets the location of the master file for each route. Checks to see if
+    file exists. If it does not, then it creates it with applicable headers.
 
     Args:
         routeName (string): Name of the route going to be downloaded
-        folderLocation (string): Location where the route files will be located
+        folderLocation (string): Location where the route files will be
+        located
 
     Returns:
         masterFile (string): Name of the file where travel times are kept
@@ -179,65 +182,34 @@ def get_last_date(masterFile):
     return lastDate
 
 
-def download_from_date(lastDate):
+def calc_time_interval(lastDate):
     """
-    Adds 15 minuets to the lastDate from the master file to reference a
-    starting point for the downloads.
+    Creates start and end times in epoch time stamps to be used in
+    Acyclica's API.
 
     Args:
-        lastDate (datetime): Latest date for the data in the master file
+        lastDate (datetime): 15 minutes after the last date found in the
+        route's master file. This is the begining time for downloads.
 
     Returns:
-        fromDate (datetime): Date to start downloading data from
-        fromDateUTC (datetime): fromDate in UTC timezone
+        fromDateEpoch (int): Epoch time code for the begining datetime.
+        toDate (datetime): Date and time for the end of the download.
+        toDateEpoch (int): Epoch time code fo the ending datetime.
     """
-    fromDate = lastDate + timedelta(minutes=15)
-    fromDateUTC = fromDate.astimezone(tz.tzutc()).replace(tzinfo=None)
-    return fromDate, fromDateUTC
-
-
-def midnight_today():
-    """
-    Calculates the date and time of the midnight just recently passed to be
-    used as an end time.
-
-    Returns:
-        toDate (datetime): Date to download data to. Yesterday's midnight.
-        toDateUTC (datetime): toDate in UTC
-    """
+    fromDateEpoch = int((lastDate + timedelta(minutes=15)).timestamp())
     toDate = datetime.today().replace(hour=0, minute=0, second=0, microsecond=0)
-    toDateUTC = toDate.astimezone(tz.tzutc()).replace(tzinfo=None)
-    return toDate, toDateUTC
-
-
-def convert_to_epoch(fromDateUTC, toDateUTC):
-    """
-    Takes the from and to time frames and converts them to time from epoch in
-    seconds.
-
-    Args:
-        fromDateUTC (datetime): Starting date for downloading data
-        toDateUTC (datetime): Ending date for downloading data
-
-    Returns:
-        fromDateEpoch (int): Epoch conversion of fromDateUTC for API use
-        toDateEpoch (int): Epoch converstion of toDateUTC for API use
-    """
-    epochTime = datetime.utcfromtimestamp(0)
-    # TODO check to see if the epcoh in UTC is needed or breaking the time system
-    fromDateEpoch = int((fromDateUTC - epochTime).total_seconds())
-    toDateEpoch = int((toDateUTC - epochTime).total_seconds())
-    return fromDateEpoch, toDateEpoch
+    toDateEpoch = int(toDate.timestamp())
+    return fromDateEpoch, toDate, toDateEpoch
 
 
 def epoch_differences(start, finish):
     """
-    Calculates total days between the fromDate and toDate along with remainder
-    to give reference for the download loop. i.e. 1.5 days = 129600 seconds.
-    days = 1 with partialDays = 43200 as remainder. Loop would run for
-    daysRequested. Request URL would go startEpoch to (startEpoch + 86400) for
-    the first loop and (startEpoch + 86400) to (startEpoch + 86400 + 43200) for
-    the second.
+    Calculates total days between the fromDate and toDate along with
+    remainder to give reference for the download loop. e.g. 1.5 days =
+    129600 seconds. Days = 1 with partialDays = 43200 as remainder. Loop
+    would run for daysRequested. Request URL would go startEpoch to
+    (startEpoch + 86400) for the first loop and (startEpoch + 86400) to
+    (startEpoch + 86400 + 43200) for the second.
 
     *Uses a double negative number to round up which adds a day when extra
     seconds are present for the loop_download.
@@ -248,7 +220,7 @@ def epoch_differences(start, finish):
 
     Returns:
         daysRequested (int): Number of days requested in download
-        remaningSeconds (int): Number of seconds left over not totalling a day
+        remaningSeconds (int): Number of seconds left not totalling a day
     """
     deltaSeconds = finish - start
     daysRequested = -(-deltaSeconds // 86400)
@@ -258,8 +230,8 @@ def epoch_differences(start, finish):
 
 def loop_download(url, routeID, routeName, folder, start, days, seconds):
     """
-    Creates the start and end times for each period in the total requested set
-    of data. Forwards each time period to the download module.
+    Creates the start and end times for each period in the total requested
+    set of data. Forwards each time period to the download module.
 
     Args:
         url (string): url used for Acyclica's API
@@ -268,7 +240,7 @@ def loop_download(url, routeID, routeName, folder, start, days, seconds):
         folder (string): location for the download to save to
         start (int): starting epoch time of the download date range
         days (int): number of days to download data for
-        seconds (int): extra seconds that don't fill a day to download data for
+        seconds (int): extra seconds that don't fill a full day
     """
     if seconds == 0:
         for day in tqdm(range(days), desc=f"Downloading {routeName}"):
@@ -316,8 +288,8 @@ def download_file(url, routeID, routeName, folder, startTime, endTime):
 
 def merge_downloaded_files(routeFolder, downloadFolder, value):
     """
-    Takes the first 6 columes of every .csv in SubFolder and concatenates them
-    into a single csv in the main folder.
+    Takes the first 6 columes of every .csv in SubFolder and concatenates
+    them into a single csv in the main folder.
 
     Args:
         routeFolder (string): Folder containing all of a route's data
@@ -366,11 +338,11 @@ def timedelta_h_m_s(delta):
 
 def file_fill(df, fromDateEpoch, toDateEpoch):
     """
-    If downloaded data is empty, i.e. detector was offline, for the entire time
-    period downloaded, fill in the .csv with blank data for the start and end
-    times to prevent future downloading of blank data. Start and end times are
-    converted from epoch seconds to milliseconds due to the data downloads
-    being in milliseconds.
+    If downloaded data is empty, i.e. detector was offline, for the entire
+    time period downloaded, fill in the .csv with blank data for the start
+    and end times to prevent future downloading of blank data. Start and end
+    times are converted from epoch seconds to milliseconds due to the data
+    downloads being in milliseconds.
 
     Args:
         df (dataframe): pandas dataframe of the merged .csv file (blank)
@@ -407,11 +379,15 @@ def format_new_files(mergedFilePath, fromDateEpoch, toDateEpoch):
     df = df.resample("15min", base=0, on="Timestamp").mean()
     # TODO possible interpolate over x amount of Nan rows? Max of 1-3?
     df = df.reset_index()
-    df["Timestamp"] = df["Timestamp"].dt.tz_localize("utc").dt.tz_convert("US/Central")
+    df["Timestamp"] = (
+        df["Timestamp"].dt.tz_localize("utc").dt.tz_convert("US/Central")
+    )
     df["Timestamp"] = pd.to_datetime(df["Timestamp"], unit="ms").apply(
         "{:%B %A %w %Y-%m-%d %H:%M:%S}".format
     )
-    df.Strengths = pd.to_timedelta(df.Strengths, unit="ms").apply(timedelta_h_m_s)
+    df.Strengths = pd.to_timedelta(df.Strengths, unit="ms").apply(
+        timedelta_h_m_s
+    )
     df.Firsts = pd.to_timedelta(df.Firsts, unit="ms").apply(timedelta_h_m_s)
     df.Lasts = pd.to_timedelta(df.Lasts, unit="ms").apply(timedelta_h_m_s)
     df.Minimums = pd.to_timedelta(df.Minimums, unit="ms").apply(timedelta_h_m_s)
@@ -425,7 +401,9 @@ def format_new_files(mergedFilePath, fromDateEpoch, toDateEpoch):
     df.DoW = df.DoW + 1
     df["DateTime"] = df.Date + " " + df.Time
     df["Date"] = pd.to_datetime(df["Date"]).apply("{:%Y-%m-%d}".format)
-    df["DateTime"] = pd.to_datetime(df["DateTime"]).apply("{:%Y-%m-%d %H:%M:%S}".format)
+    df["DateTime"] = pd.to_datetime(df["DateTime"]).apply(
+        "{:%Y-%m-%d %H:%M:%S}".format
+    )
     del df["Timestamp"]
     df = df[
         [
@@ -457,7 +435,7 @@ def append_new_timeframes(mergedFilePath, masterFile):
         with open(mergedFilePath, "rb") as f:
             next(f)
             fout.write(f.read())
-    # TODO put a check in to make sure the files were appended before deleting
+    # TODO put a check in to make sure the files were appended befor deleting
     delete_temp_file(mergedFilePath)
 
 
@@ -473,7 +451,7 @@ def delete_temp_file(mergedFilePath):
 
 def delete_old_timeframes(toDate, masterFile):
     """
-    Reads the master file for the Route and deletes entries older than 2 years
+    Reads the master file and deletes entries older than 2 years
 
     Args:
         toDate (datetime): Date of last downloaded data
@@ -495,7 +473,8 @@ def download_from_acyclica():
     - Creates the base for url used by Acyclicas API to retrieve data.
     - For each route in the dictionary of routes:
         - Downloads data starting from the last date in the master file.
-        - Formats data and merges into the master file while purging duplicates.
+        - Formats data and merges into the master file while purging
+        duplicates.
         - Deletes data older than 2 years from the last date downloaded.
     """
     acyclicaRoutes = route_dict()
@@ -505,10 +484,8 @@ def download_from_acyclica():
         check_old_files(downloadFolder)
         masterFile = master_file_check(value, routeFolder)
         lastDate = get_last_date(masterFile)
-        fromDate, fromDateUTC = download_from_date(lastDate)
-        toDate, toDateUTC = midnight_today()
-        if toDate > fromDate:
-            fromDateEpoch, toDateEpoch = convert_to_epoch(fromDateUTC, toDateUTC)
+        fromDateEpoch, toDate, toDateEpoch = calc_time_interval(lastDate)
+        if toDateEpoch > fromDateEpoch:
             wDays, extraSec = epoch_differences(fromDateEpoch, toDateEpoch)
             loop_download(
                 acyclicaBaseURL,
@@ -519,7 +496,9 @@ def download_from_acyclica():
                 wDays,
                 extraSec,
             )
-            mergedFilePath = merge_downloaded_files(routeFolder, downloadFolder, value)
+            mergedFilePath = merge_downloaded_files(
+                routeFolder, downloadFolder, value
+            )
             format_new_files(mergedFilePath, fromDateEpoch, toDateEpoch)
             append_new_timeframes(mergedFilePath, masterFile)
             delete_old_timeframes(toDate, masterFile)
