@@ -30,9 +30,10 @@ import sys
 import time
 from datetime import datetime, timedelta
 from dateutil import tz
+from tqdm import tqdm
 import pandas as pd
 import numpy as np
-from tqdm import tqdm
+
 
 logging.basicConfig(
     filename="Logs.txt",
